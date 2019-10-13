@@ -233,6 +233,7 @@ BACellTypesList <- list(
 ui <- 
     
     dashboardPage(
+        
         # Tabs Headers ----
         dashboardHeader(title = "Datasets", 
                         shiny::tags$li(a(href='http://www.utoledo.edu/med/depts/neurosciences/CDRL.html', target="_blank",
@@ -263,6 +264,18 @@ ui <-
         ),
         
         dashboardBody(
+            tags$head(HTML(
+                "<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src='https://www.googletagmanager.com/gtag/js?id=UA-149864972-1'></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-149864972-1');
+</script>"
+                
+            )),
             useShinyjs(),
             tabItems(
                 
