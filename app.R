@@ -1074,21 +1074,42 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
                 fullDataSet$Log2FCAbs <- abs(fullDataSet$Log2FC)
                 fullDataSet$Dir <- ifelse(fullDataSet$Log2FC>0,"Up", "Down")
                 
+                # data.table::setorder(setDT(filter(fullDataSet, DataSet %in% sel)), DataSet,-Log2FCAbs)[, indx := seq_len(.N), DataSet][indx <= input$CommTop] %>%  
+                #   select(`Gene Symbol`, Group, Dir) %>% 
+                #   group_by(`Gene Symbol`) %>% mutate(Hits = n()) %>%
+                #   group_by(`Gene Symbol`,Group) %>% mutate(HitsPerGroup = n()) %>%
+                #   group_by(`Gene Symbol` , Dir) %>% mutate(All = n()) %>% 
+                #   group_by(`Gene Symbol`, Group , Dir) %>% 
+                #   mutate(byDir = n()) %>%  
+                #   distinct() %>%
+                #   pivot_wider(names_from = Dir, values_from = c(byDir, All)) %>%
+                #   rename(Down = byDir_Down, Up = byDir_Up) %>% 
+                #   pivot_wider(names_from = c(Group), values_from = c(HitsPerGroup,Down, Up), names_sep = ">") %>% 
+                #   rename(Up = All_Up, Down = All_Down) %>% 
+                #   arrange(desc(Hits)) %>% ungroup() %>% 
+                #   slice(1:input$CommTop2) -> commTable
+                
                 data.table::setorder(setDT(filter(fullDataSet, DataSet %in% sel)), DataSet,-Log2FCAbs)[, indx := seq_len(.N), DataSet][indx <= input$CommTop] %>%  
                   select(`Gene Symbol`, Group, Dir) %>% 
-                  group_by(`Gene Symbol`) %>% mutate(Hits = n()) %>%
-                  group_by(`Gene Symbol`,Group) %>% mutate(HitsPerGroup = n()) %>%
-                  group_by(`Gene Symbol` , Dir) %>% mutate(All = n()) %>% 
-                  group_by(`Gene Symbol`, Group , Dir) %>% 
-                  mutate(byDir = n()) %>%  
-                  distinct() %>%
-                  pivot_wider(names_from = Dir, values_from = c(byDir, All)) %>%
-                  rename(Down = byDir_Down, Up = byDir_Up) %>% 
-                  pivot_wider(names_from = c(Group), values_from = c(HitsPerGroup,Down, Up), names_sep = ">") %>% 
-                  rename(Up = All_Up, Down = All_Down) %>% 
+                  add_count(`Gene Symbol`, name = "Hits") %>% 
+                  add_count(`Gene Symbol`,Group, name ="HitsPerGroup") %>% 
+                  add_count(`Gene Symbol` , Dir,name = "All") %>% 
+                  add_count(`Gene Symbol`, Group , Dir, name = "byDir") %>% 
+                  distinct() -> tempDf
+                
+                tempDf %>% select(`Gene Symbol`, All, Dir) %>% 
+                  pivot_wider(names_from = Dir, values_from = c(All), values_fn = list(All = max)
+                              
+                  ) -> tempDfAll
+                
+                tempDf %>% select(-All) %>% 
+                  pivot_wider(names_from = Dir, values_from = c(byDir), values_fill = list(Up = 0, Down = 0)
+                  ) %>% 
+                  pivot_wider(names_from = c(Group), values_from = c(HitsPerGroup,Down, Up),names_sep = ">") %>% 
+                  left_join(tempDfAll, by = "Gene Symbol") %>% select(`Gene Symbol`, Hits ,Up, Down, everything()) %>% 
+                  
                   arrange(desc(Hits)) %>% ungroup() %>% 
                   slice(1:input$CommTop2) -> commTable
-                
                   
                 
                 
