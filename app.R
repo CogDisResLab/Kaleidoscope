@@ -1258,9 +1258,9 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             
             #output$t1 = shiny::renderTable({ 
             
-            # spec <- fullDataSet2 %>% dplyr::rename(p = `P Value`) %>% 
-            #     expand(DataSet, .value = c("Log2FC", "p")) %>% 
-            #     mutate(.name = paste0(DataSet, ">", .value))
+            spec <- fullDataSet2 %>% dplyr::rename(p = `P Value`) %>%
+                expand(DataSet, .value = c("Log2FC", "p")) %>%
+                mutate(.name = paste0(DataSet, ">", .value))
             
             
             
