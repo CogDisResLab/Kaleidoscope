@@ -20,6 +20,9 @@ library(Hmisc)
 library(corrplot)
 library(gt)
 library(data.table)
+#library(promises)
+#library(future)
+#plan(multiprocess)
 
 conflict_prefer("box", "shinydashboard")
 conflict_prefer("filter", "dplyr")
@@ -53,13 +56,14 @@ dbListFull <- list("Groups" = c("Region", "Cell"),
                        "Mt.Sinai TPA" = "MtSinaiTPA",
                        "Mt.Sinai MTA" = "MtSinaiMTA",
                        "Gandal Microarray" = "gandalMicro",
-                       "Gandal RNAseq" = "gandalRNAseq"
+                       "Gandal RNAseq" = "gandalRNAseq", 
+                       "CommonMind DLPFC Re 1"="CommonMind_DLPFC"
                    ),
                    
                    # Cell Level Datasets
                    "Cell Level" = c(
-                       "Super", "Deep", 
-                       "Super_Deep",
+                       "Superficial_Neurons", "Deep_Neurons", 
+                       "Superficial_Deep_Neurons",
                        "hiPSC_Neuron", 
                        "hiPSC_NPC1",
                        "Blood mRNA" = "BloodmRNA",
@@ -344,8 +348,9 @@ ui <-
                                     # 
                                     #sliderInput("CommThres", "Log2FC Threshold:", min = 0, max = 2, step = 0.1, value = 1),
                                     #sliderInput("CommThres2", "ECDF Threshold:", min = 0, max = 1, step = 0.01, value = 0.95),
-                                    sliderInput("CommTop", "Top hits per dataset:", min = 100, max = 1000, step = 100, value = 500),
-                                    sliderInput("CommTop2", "Top Overlaping hits:", min = 100, max = 1000, step = 100, value = 100),
+                                    sliderInput("CommTop", "Top hits per dataset:", min = 100, max = 3000, step = 100, value = 1000),
+                                    sliderInput("CommTop2", "Top Overlaping hits:", min = 100, max = 1000, step = 10, value = 100),
+                                    switchInput(inputId = "showtable",size = "mini", label = "Display table?", value = T),
                                     #fileInput("DSinput", "Upload a dataset:", accept = c(".RDS")),
                                     #textInput("DSNameInput", "Name your dataset:"),
                                     #actionButton("DSupload", "Upload"),
@@ -358,14 +363,25 @@ ui <-
                                         tabsetPanel( id = "LUResults", 
                                                      tabPanel("Results", 
                                                               gt_output(outputId = "t1"),
+                                                              #DT::dataTableOutput("t1"),
+                                                              tags$hr(),
                                                               # box(
                                                               #   title = "Lookup Table", width = NULL, status = "primary",
                                                               #   div(style = 'overflow-x: scroll', shiny::tableOutput('t1'))
                                                               # ),
                                                               verbatimTextOutput("targetListed"),
-                                                              downloadButton("down_1", "Download csv"),
+                                                              downloadButton("down_1", "Download LookUp table"),
+                                                              tags$hr(),
                                                               gt_output(outputId = "overlapTable"),
-                                                              downloadButton("down_2", "Download csv")
+                                                              tags$hr(),
+                                                              downloadButton("down_2", "Download Summary table"),
+                                                              tags$hr(),
+                                                              box("Up", width = 12,
+                                                                  verbatimTextOutput("classifyGenesUp")
+                                                                  ),
+                                                              box("Down", width = 12,
+                                                                  verbatimTextOutput("classifyGenesDown")
+                                                              ),
                                                      ),
                                                      tabPanel("Lookup Graph", 
                                                               sliderInput("lookupBarGraphPar1", "Log2FC Threshold:", min = 0, max = 4, step = 0.1, value = 0.3),
@@ -374,10 +390,37 @@ ui <-
                                                               
                                                      ),
                                                      tabPanel("Log2FC HM", plotOutput("HM2", height = "700px"),
-                                                              sliderInput("heatmapTH1", "Slider:", min = 0.2, max = 10, value = 1)
+                                                              
+                                                              fluidRow(
+                                                                #box("Figure Adjustments", status = "primary",
+                                                                    column(6,
+                                                              sliderInput("heatmapTH1", "Slider:", min = 0.2, max = 10, value = 1),
+                                                                    ),
+                                                                    column(6,
+                                                              sliderInput("heatmap2SizeRow", "row labels size:", min = 0, max = 3, value = 1, step = 0.1),
+                                                              sliderInput("heatmap2SizeCol", "col labels size:", min = 0, max = 3, value = 0.6, step = 0.1)
+                                                                    )
+                                                                #)
+                                                              ),
+                                                              downloadButton("HM2_down", "Download")
                                                      ),
                                                      tabPanel("FC HM", plotOutput("HM3", height = "700px"),
-                                                              sliderInput("heatmapTH2", "Slider:", min = 1.1, max = 10, value = 2)
+                                                              
+                                                              fluidRow(
+                                                              #box("Figure Adjustments", status = "primary",
+                                                                  column(6,
+
+                                                                  sliderInput("heatmapTH2", "Slider:", min = 1.1, max = 10, value = 2)
+
+
+                                                                  ),
+                                                                  column(6,
+                                                                  sliderInput("heatmap3SizeRow", "row labels size:", min = 0, max = 3, value = 1, step = 0.1),
+                                                                  sliderInput("heatmap3SizeCol", "col labels size:", min = 0, max = 3, value = 0.6, step = 0.1)
+                                                                  )
+                                                              #)
+                                                              ),
+                                                              downloadButton("HM3_down", "Download")
                                                      ),
                                                      tabPanel("Overlapping HM", plotOutput("HM5", height = "700px"),
                                                               sliderInput("heatmap5SizeRow", "row labels size:", min = 1, max = 10, value = 4),
@@ -713,7 +756,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             if(!exists("fullDataSet")) {
                 withProgress(message = 'Loading lookup data ...', value = 0, {
                     incProgress(2/10)
-                    fullDataSet <<- readRDS("./data/fullDataSet_Oct8.rds") %>% filter(DataSet != "CommonMind_DLPFC")
+                    fullDataSet <<- readRDS("./data/fullDataSet_Nov4.rds")
                     incProgress(7/10)
                     fullDBsInfo <<- read.csv("./data/SCZ _Datasets_Info.csv", header = T, stringsAsFactors = F)
                     incProgress(10/10)
@@ -992,15 +1035,20 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             shinyjs::disable("act")
             shinyjs::hide("targetMissing")
             shinyjs::hide("targetListed")
+            shinyjs::hide("classifyGenesDown")
+            shinyjs::hide("classifyGenesUp")
+            
             #hideTab(LUResults,"HM5")
             notFound <- NULL
             
             sel <- c(input$dbs,input$dbs2, input$dbs3, input$dbs4, input$dbs5, input$dbs6)
             sel <- sel[sel!="Cell"& sel!="Region"]
-            print(sel)
+            
+            
             selLength <- length(sel)
             
             # Seperator Options ---- 
+            
             if (input$sepChoice == " ") {
                 
                 genes <- strsplit(input$gene, "\\s+")
@@ -1029,22 +1077,86 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             else if (input$inputChoice == "CommHits") {
                 
                 fullDataSet$Log2FCAbs <- abs(fullDataSet$Log2FC)
+                fullDataSet$Dir <- ifelse(fullDataSet$Log2FC>0,"Up", "Down")
                 
-                data.table::setorder(setDT(filter(fullDataSet, DataSet %in% sel)), DataSet, -Log2FCAbs)[, indx := seq_len(.N), DataSet][indx <= input$CommTop] %>% 
-                    count(`Gene Symbol`) %>% arrange(desc(n)) %>% slice(1:input$CommTop2) -> commTable
+                # data.table::setorder(setDT(filter(fullDataSet, DataSet %in% sel)), DataSet,-Log2FCAbs)[, indx := seq_len(.N), DataSet][indx <= input$CommTop] %>%  
+                #   select(`Gene Symbol`, Group, Dir) %>% 
+                #   group_by(`Gene Symbol`) %>% mutate(Hits = n()) %>%
+                #   group_by(`Gene Symbol`,Group) %>% mutate(HitsPerGroup = n()) %>%
+                #   group_by(`Gene Symbol` , Dir) %>% mutate(All = n()) %>% 
+                #   group_by(`Gene Symbol`, Group , Dir) %>% 
+                #   mutate(byDir = n()) %>%  
+                #   distinct() %>%
+                #   pivot_wider(names_from = Dir, values_from = c(byDir, All)) %>%
+                #   rename(Down = byDir_Down, Up = byDir_Up) %>% 
+                #   pivot_wider(names_from = c(Group), values_from = c(HitsPerGroup,Down, Up), names_sep = ">") %>% 
+                #   rename(Up = All_Up, Down = All_Down) %>% 
+                #   arrange(desc(Hits)) %>% ungroup() %>% 
+                #   slice(1:input$CommTop2) -> commTable
+                
+                data.table::setorder(setDT(filter(fullDataSet, DataSet %in% sel)), DataSet,-Log2FCAbs)[, indx := seq_len(.N), DataSet][indx <= input$CommTop] %>%  
+                  select(`Gene Symbol`, Group, Dir) %>% 
+                  add_count(`Gene Symbol`, name = "Hits") %>% 
+                  add_count(`Gene Symbol`,Group, name ="HitsPerGroup") %>% 
+                  add_count(`Gene Symbol` , Dir,name = "All") %>% 
+                  add_count(`Gene Symbol`, Group , Dir, name = "byDir") %>% 
+                  distinct() -> tempDf
+                
+                tempDf %>% select(`Gene Symbol`, All, Dir) %>% 
+                  pivot_wider(names_from = Dir, values_from = c(All), values_fn = list(All = max)
+                              
+                  ) -> tempDfAll
+                
+                tempDf %>% select(-All) %>% 
+                  pivot_wider(names_from = Dir, values_from = c(byDir), values_fill = list(Up = 0, Down = 0)
+                  ) %>% 
+                  pivot_wider(names_from = c(Group), values_from = c(HitsPerGroup,Down, Up),names_sep = ">") %>% 
+                  left_join(tempDfAll, by = "Gene Symbol") %>% select(`Gene Symbol`, Hits ,Up, Down, everything()) %>% 
+                  
+                  arrange(desc(Hits)) %>% ungroup() %>% 
+                  slice(1:input$CommTop2) -> commTable
+                  
+                
+                
+                
+                # data.table::setorder(setDT(filter(fullDataSet, DataSet %in% sel)), DataSet, -Log2FCAbs)[, indx := seq_len(.N), DataSet][indx <= input$CommTop] %>% 
+                #   #mutate(Dir = ifelse(Log2FC>0,"Up", "Down")) %>% group_by(Dir) %>% 
+                #     count(`Gene Symbol`) %>% arrange(desc(n)) %>% slice(1:input$CommTop2) -> commTable
                 
                 genes<- commTable$`Gene Symbol` 
                 
-                output$overlapTable <- render_gt(gt(commTable),
+                commTable %>% select(`Gene Symbol`, Hits, Up, Down) %>% 
+                  mutate(
+                    isUp = case_when(
+                      is.na(Up) ~ F,
+                      is.na(Down) ~ T,
+                      Up > Down ~ T,
+                      Up < Down ~ F
+                    )
+                  ) -> commTableSum 
+                
+                classGenes <- split(commTableSum$`Gene Symbol`,commTableSum$isUp )
+                
+                
+                output$overlapTable <- render_gt(
+                  gt(commTable) %>% cols_split_delim(delim = ">") %>% 
+                    fmt_missing(columns = 1:ncol(.), missing_text = "-") ,
                                                  height = px(400)
                 )
                 shinyjs::show("overlapTable")
+                
+                output$classifyGenesUp <- shiny::renderText(paste(classGenes[["TRUE"]], collapse = ","))
+                output$classifyGenesDown <- shiny::renderText(paste(classGenes[["FALSE"]], collapse = ","))
+                
+                shinyjs::show("classifyGenesDown")
+                shinyjs::show("classifyGenesUp")
+                
                 output$down_2 <- downloadHandler(
                     filename = function() {
                         paste("OverLapTable_results", ".csv", sep = "")
                     },
                     content = function(file) {
-                        write.csv(commTable, file, row.names = FALSE)
+                        write.csv(commTable, file,row.names = FALSE)
                     }
                 )
                 
@@ -1100,13 +1212,10 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             }
             incProgress(3/10)
             
-            
-            
             fullDataSet %>% select(`Gene Symbol`, Log2FC, `Fold Change`, `P Value`, ecdfPlot,DataSet) %>% filter(`Gene Symbol` %in% genes, DataSet %in% sel) -> fullDataSet2
             
             fullDataSet2 %>% pull(`Gene Symbol`) %>% unique()  -> FoundGenes
             
-            print(FoundGenes)
             FoundGenesLength <- length(FoundGenes)
             notFoundGenes <- setdiff(genes, FoundGenes)
             output$targetMissing <- shiny::renderText(paste(notFoundGenes, collapse = ","))
@@ -1149,23 +1258,37 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             
             #output$t1 = shiny::renderTable({ 
             
-            spec <- fullDataSet2 %>% dplyr::rename(p = `P Value`) %>% 
-                expand(DataSet, .value = c("Log2FC", "p")) %>% 
-                mutate(.name = paste0(DataSet, ">", .value))
+            # spec <- fullDataSet2 %>% dplyr::rename(p = `P Value`) %>% 
+            #     expand(DataSet, .value = c("Log2FC", "p")) %>% 
+            #     mutate(.name = paste0(DataSet, ">", .value))
             
             
             
-            fullDataSet2 %>% dplyr::rename(p = `P Value`) %>% distinct(`Gene Symbol`,DataSet, .keep_all=T) %>% 
-                select(-`Fold Change`, -ecdfPlot) %>% 
-                mutate_if(is.numeric, round, 3) %>% 
-                pivot_wider_spec(spec = spec) %>% gt() %>% 
-                cols_split_delim(delim = ">") %>% fmt_missing(columns = 1:ncol(.), missing_text = "-") -> lookup_gt_table
+            # fullDataSet2 %>% dplyr::rename(p = `P Value`) %>% distinct(`Gene Symbol`,DataSet, .keep_all=T) %>% 
+            #     select(-`Fold Change`, -ecdfPlot) %>% 
+            #     mutate_if(is.numeric, round, 3) %>% 
+            #     pivot_wider_spec(spec = spec) %>% gt() %>% 
+            #     cols_split_delim(delim = ">") %>% fmt_missing(columns = 1:ncol(.), missing_text = "-") -> lookup_gt_table
             
-            
+            if (input$showtable == T) {
+              # output$t1 <- DT::renderDataTable(DT::datatable(lookup_table,
+              #                                                 escape = FALSE, rownames = F, style = "bootstrap", options = list(na="string",scrollX=TRUE,columnDefs = list(list(
+              #                                                   className = 'dt-center', targets = "_all")))
+              # ))
             output$t1 = render_gt(
-                expr = lookup_gt_table, 
+              #future({
+                fullDataSet2 %>% dplyr::rename(p = `P Value`) %>% distinct(`Gene Symbol`,DataSet, .keep_all=T) %>%
+                  select(-`Fold Change`, -ecdfPlot) %>%
+                  mutate_if(is.numeric, round, 3) %>%
+                  pivot_wider_spec(spec = spec) %>% gt() %>%
+                  cols_split_delim(delim = ">") %>% fmt_missing(columns = 1:ncol(.), missing_text = "-"),
+              #}),
                 height = px(700)
             )
+            shinyjs::show("t1")
+            }
+            else {shinyjs::hide("t1")}
+      
             
             incProgress(5/10)
             
@@ -1245,7 +1368,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             hmcol2 <- colorRampPalette(c("yellow", "white", "red"))(n = 100)
             
             incProgress(7/10)
-            output$HM2 <- renderPlot(
+            output$HM2 <- renderPlot({
                 # pheatmap::pheatmap(
                 #   mmHM2,scale="none",
                 #   cluster_rows =if(FoundGenesLength>1){T} else {F},
@@ -1253,15 +1376,29 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
                 #   col = hmcol2,trace="none", na_col = "gray81",
                 #   breaks = col_breaks2()
                 # )
-                heatmap.2(
+              
+              hmpdf2 <<- function() {heatmap.2(
                     mmHM2,scale="none",
                     Rowv = if(FoundGenesLength>1){T} else {F},
                     Colv = if(selLength>2){T} else {F},
                     col = hmcol2,trace="none", na.color = "gray81",
-                    margin=c(7, 5),cexCol=0.42,cexRow=0.8,density.info="density",
+                    margin=c(7, 5),
+                    cexCol=input$heatmap2SizeCol,
+                    cexRow=input$heatmap2SizeRow,
+                    #cexCol=0.42,
+                    #cexRow=0.8,
+                    density.info="density",
                     breaks = col_breaks2()
                 )
-                
+              }
+              hmpdf2()
+              #{ pdf("Log2FC_Heatmap.pdf")
+              #  hmpdf
+              #  dev.off()
+              #}
+
+              
+            }
                 # pheatmap(
                 #   mmHM2,scale="none",
                 #   cluster_rows =if(FoundGenesLength>1){T} else {F},
@@ -1271,6 +1408,18 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
                 # )
             )
             
+            output$HM2_down <- downloadHandler(
+              filename = function() {
+                "Log2FC_Heatmap_kalediscope.pdf"
+              },
+              content = function(file) {
+                pdf(file)
+                hmpdf2()
+                dev.off()
+                
+                #file.copy("Log2FC_Heatmap.pdf", file)
+              }
+            )
             
             # heatmap fc
             col_breaks3 = reactive({
@@ -1280,16 +1429,25 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             })
             
             hmcol3 <- colorRampPalette(c("yellow", "white", "red"))(n = 100)
-            output$HM3 <- renderPlot(
-                heatmap.2(
+            output$HM3 <- renderPlot( {
+              hmpdf3 <<- function() {heatmap.2(
                     
                     mmHM3,scale="none",
                     Rowv = if(FoundGenesLength>1){T} else {F},
                     Colv = if(selLength>2){T} else {F},
                     col = hmcol3,trace="none", na.color = "gray81",
-                    margin=c(7, 5),cexCol=0.42,cexRow=0.8,density.info="density",
+                    
+                    margin=c(7, 5),
+                    cexCol=input$heatmap3SizeCol,
+                    cexRow=input$heatmap3SizeRow,
+                    #cexCol=0.42,cexRow=0.8,
+                    density.info="density",
                     breaks = col_breaks3()
                 )
+              }
+              
+              hmpdf3()
+            }
                 
                 # pheatmap::pheatmap(
                 #   mmHM3,scale="none",
@@ -1307,6 +1465,19 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
                 #   margin=c(7, 5),
                 #   breaks  = col_breaks3()
                 # )
+            )
+            
+            output$HM3_down <- downloadHandler(
+              filename = function() {
+                "FC_Heatmap_kalediscope.pdf"
+              },
+              content = function(file) {
+                pdf(file)
+                hmpdf3()
+                dev.off()
+                
+                #file.copy("Log2FC_Heatmap.pdf", file)
+              }
             )
             
             # heatmap Harmonized ecdf
@@ -1332,6 +1503,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             # output$HM4 <- renderPlot(heatmap.2(mmHM4,scale="none",col = hmcol4,trace="none", na.color = "gray81",margin=c(7, 5),cexCol=0.8,cexRow=0.5,density.info="density",breaks = col_breaks4))
             
             output$HM4 <- plotly::renderPlotly(
+              #future({
                 heatmaply::heatmaply(
                     mmHM4, limits = c(-1,1),
                     Rowv = if(FoundGenesLength>1){T} else {F},
@@ -1340,6 +1512,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
                         values = scales::rescale(c(-1, -0.99999,-0.25 ,0, 0.25 ,0.99999, 1))
                     )
                 )
+              #})
             )
             
             incProgress(9/10)
@@ -1352,14 +1525,8 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
                 spread(DataSet, Log2FC) %>% 
                 column_to_rownames("Gene Symbol") -> cormatr
             
-            if (input$corGenes == "fullSig") {
-                corGenLen <- 5
-                
-            }
             
-            else { corGenLen <- length(genes)}
-            
-            if (corGenLen > 4 & length(sel) >= 2 ) {
+            if (FoundGenesLength > 4 & length(sel) >= 2 ) {
                 cormatrRes<-rcorr(as.matrix(cormatr), type = "pearson")
                 cormatrRes$r[cormatrRes$n<5]<-0 # ignore less than five observations
                 
