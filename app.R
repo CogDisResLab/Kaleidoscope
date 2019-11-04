@@ -20,6 +20,9 @@ library(Hmisc)
 library(corrplot)
 library(gt)
 library(data.table)
+#library(promises)
+#library(future)
+#plan(multiprocess)
 
 conflict_prefer("box", "shinydashboard")
 conflict_prefer("filter", "dplyr")
@@ -360,6 +363,7 @@ ui <-
                                         tabsetPanel( id = "LUResults", 
                                                      tabPanel("Results", 
                                                               gt_output(outputId = "t1"),
+                                                              #DT::dataTableOutput("t1"),
                                                               tags$hr(),
                                                               # box(
                                                               #   title = "Lookup Table", width = NULL, status = "primary",
@@ -752,7 +756,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             if(!exists("fullDataSet")) {
                 withProgress(message = 'Loading lookup data ...', value = 0, {
                     incProgress(2/10)
-                    fullDataSet <<- readRDS("./data/fullDataSet_Oct15.rds")
+                    fullDataSet <<- readRDS("./data/fullDataSet_Nov4.rds")
                     incProgress(7/10)
                     fullDBsInfo <<- read.csv("./data/SCZ _Datasets_Info.csv", header = T, stringsAsFactors = F)
                     incProgress(10/10)
@@ -1039,7 +1043,8 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             
             sel <- c(input$dbs,input$dbs2, input$dbs3, input$dbs4, input$dbs5, input$dbs6)
             sel <- sel[sel!="Cell"& sel!="Region"]
-            #print(sel)
+            
+            
             selLength <- length(sel)
             
             # Seperator Options ---- 
@@ -1119,8 +1124,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
                 #     count(`Gene Symbol`) %>% arrange(desc(n)) %>% slice(1:input$CommTop2) -> commTable
                 
                 genes<- commTable$`Gene Symbol` 
-                print("from commtable")
-                print(genes)
+                
                 commTable %>% select(`Gene Symbol`, Hits, Up, Down) %>% 
                   mutate(
                     isUp = case_when(
@@ -1208,13 +1212,10 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             }
             incProgress(3/10)
             
-            
-            
             fullDataSet %>% select(`Gene Symbol`, Log2FC, `Fold Change`, `P Value`, ecdfPlot,DataSet) %>% filter(`Gene Symbol` %in% genes, DataSet %in% sel) -> fullDataSet2
             
             fullDataSet2 %>% pull(`Gene Symbol`) %>% unique()  -> FoundGenes
-            print("foundgenes")
-            print(FoundGenes)
+            
             FoundGenesLength <- length(FoundGenes)
             notFoundGenes <- setdiff(genes, FoundGenes)
             output$targetMissing <- shiny::renderText(paste(notFoundGenes, collapse = ","))
@@ -1257,21 +1258,31 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             
             #output$t1 = shiny::renderTable({ 
             
-            spec <- fullDataSet2 %>% dplyr::rename(p = `P Value`) %>% 
-                expand(DataSet, .value = c("Log2FC", "p")) %>% 
-                mutate(.name = paste0(DataSet, ">", .value))
+            # spec <- fullDataSet2 %>% dplyr::rename(p = `P Value`) %>% 
+            #     expand(DataSet, .value = c("Log2FC", "p")) %>% 
+            #     mutate(.name = paste0(DataSet, ">", .value))
             
             
             
-            fullDataSet2 %>% dplyr::rename(p = `P Value`) %>% distinct(`Gene Symbol`,DataSet, .keep_all=T) %>% 
-                select(-`Fold Change`, -ecdfPlot) %>% 
-                mutate_if(is.numeric, round, 3) %>% 
-                pivot_wider_spec(spec = spec) %>% gt() %>% 
-                cols_split_delim(delim = ">") %>% fmt_missing(columns = 1:ncol(.), missing_text = "-") -> lookup_gt_table
+            # fullDataSet2 %>% dplyr::rename(p = `P Value`) %>% distinct(`Gene Symbol`,DataSet, .keep_all=T) %>% 
+            #     select(-`Fold Change`, -ecdfPlot) %>% 
+            #     mutate_if(is.numeric, round, 3) %>% 
+            #     pivot_wider_spec(spec = spec) %>% gt() %>% 
+            #     cols_split_delim(delim = ">") %>% fmt_missing(columns = 1:ncol(.), missing_text = "-") -> lookup_gt_table
             
             if (input$showtable == T) {
+              # output$t1 <- DT::renderDataTable(DT::datatable(lookup_table,
+              #                                                 escape = FALSE, rownames = F, style = "bootstrap", options = list(na="string",scrollX=TRUE,columnDefs = list(list(
+              #                                                   className = 'dt-center', targets = "_all")))
+              # ))
             output$t1 = render_gt(
-                expr = lookup_gt_table, 
+              #future({
+                fullDataSet2 %>% dplyr::rename(p = `P Value`) %>% distinct(`Gene Symbol`,DataSet, .keep_all=T) %>%
+                  select(-`Fold Change`, -ecdfPlot) %>%
+                  mutate_if(is.numeric, round, 3) %>%
+                  pivot_wider_spec(spec = spec) %>% gt() %>%
+                  cols_split_delim(delim = ">") %>% fmt_missing(columns = 1:ncol(.), missing_text = "-"),
+              #}),
                 height = px(700)
             )
             shinyjs::show("t1")
@@ -1492,6 +1503,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             # output$HM4 <- renderPlot(heatmap.2(mmHM4,scale="none",col = hmcol4,trace="none", na.color = "gray81",margin=c(7, 5),cexCol=0.8,cexRow=0.5,density.info="density",breaks = col_breaks4))
             
             output$HM4 <- plotly::renderPlotly(
+              #future({
                 heatmaply::heatmaply(
                     mmHM4, limits = c(-1,1),
                     Rowv = if(FoundGenesLength>1){T} else {F},
@@ -1500,6 +1512,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
                         values = scales::rescale(c(-1, -0.99999,-0.25 ,0, 0.25 ,0.99999, 1))
                     )
                 )
+              #})
             )
             
             incProgress(9/10)
