@@ -93,17 +93,6 @@ EnrichrBtn <- function(id, label = "Enrichr") {
   )
 }
 
-my_db <- dbPool(
-  RMySQL::MySQL(), 
-  dbname = "ksdatabase",
-  host = "cdrlshinyapps.cdkkdi6q6ptl.us-east-2.rds.amazonaws.com",
-  username = "cdrl",
-  password = "cdrl_ks"
-)
-
-onStop(function() {
-  poolClose(my_db)
-})
 
 
 # Global Varaibles ----
@@ -197,6 +186,18 @@ mddListFullDop <- list(
   "Benoit_Mouse_NAC", 
   #"D3 Proteomics", 
   "D3 RNAseq",
+  "Arion_LCM_MDD",
+  "Chang_ACC_Female",
+  "Chang_ACC_Male",
+  "Chang_ACC1",
+  "Chang_ACC2",
+  "Chang_ACC3",
+  "Chang_AMY1",
+  "Chang_AMY2",
+  "Chang_DLPFC_Female",
+  "Chang_DLPFC_Male",
+  "Chang_DLPFC",
+  "Chang_OrbitalVentralPrefrontalCortex",
   "ALS D1", 
   "ALS D2"
   
@@ -319,6 +320,13 @@ AgingListFull <- list("Aging_Mice_Hippocampus_PR",
                       "Aging_Mice_Cerebellum_PR",
                       "Aging_Mice_Cortex_PR")
 
+CVListFull <- list(
+                   "GSE45042_MOCKvsEMC_24h",
+                   "GSE56192_CTLvsMERS_24h",
+                   "GSE56192_CTLvsSARS_24h",
+                   "GSE3326_MOCKvsSARS_36h"
+                   )
+
 
 
 AddedListFullDop <- list()
@@ -427,22 +435,24 @@ ui <-
                                   multiple = TRUE),
                       pickerInput(inputId="dbs2",label="Dopamine",choices=dbListFullDop, options = list(`actions-box` = TRUE), 
                                   multiple = TRUE),
-                      pickerInput(inputId="dbs4",label="MDD",choices=mddListFullDop, options = list(`actions-box` = TRUE),
+                      pickerInput(inputId="dbs3",label="MDD",choices=mddListFullDop, options = list(`actions-box` = TRUE),
                                   multiple = TRUE),
-                      pickerInput(inputId="dbs5",label="Antipsychotics",choices=AntipsychoticsListFullDop, options = list(`actions-box` = TRUE),
+                      pickerInput(inputId="dbs4",label="Antipsychotics",choices=AntipsychoticsListFullDop, options = list(`actions-box` = TRUE),
                                   multiple = TRUE),
-                      pickerInput(inputId="dbs6",label="Insulin Signaling Inhibition",choices=InsulinListFullDop, options = list(`actions-box` = TRUE),
-                                  multiple = TRUE),
-                      
-                      pickerInput(inputId="dbs8",label="Bipolar Disorder",choices=bpdListFullDop, options = list(`actions-box` = TRUE),
+                      pickerInput(inputId="dbs5",label="Insulin Signaling Inhibition",choices=InsulinListFullDop, options = list(`actions-box` = TRUE),
                                   multiple = TRUE),
                       
-                      pickerInput(inputId="dbs9",label="Aging",choices=AgingListFull, options = list(`actions-box` = TRUE),
-                                  multiple = TRUE),
-                      pickerInput(inputId="dbs7",label="Microcystin",choices=MCListFull, options = list(`actions-box` = TRUE),
+                      pickerInput(inputId="dbs6",label="Bipolar Disorder",choices=bpdListFullDop, options = list(`actions-box` = TRUE),
                                   multiple = TRUE),
                       
-                      pickerInput(inputId="dbs3",label="Added",choices=AddedListFullDop, options = list(`actions-box` = TRUE),
+                      pickerInput(inputId="dbs7",label="Aging",choices=AgingListFull, options = list(`actions-box` = TRUE),
+                                  multiple = TRUE),
+                      pickerInput(inputId="dbs8",label="Microcystin",choices=MCListFull, options = list(`actions-box` = TRUE),
+                                  multiple = TRUE),
+                      pickerInput(inputId="dbs9",label="Coronavirus",choices=CVListFull, options = list(`actions-box` = TRUE),
+                                  multiple = TRUE),
+                      
+                      pickerInput(inputId="dbs_added",label="Added",choices=AddedListFullDop, options = list(`actions-box` = TRUE),
                                   multiple = TRUE),
                       
                       tags$hr(),
@@ -884,6 +894,20 @@ genetic variant - phenotype associations
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
   
   # Load Data Files ----
+  withProgress(message = 'Cenncting to db ...', value = 4, {
+  my_db <- dbPool(
+    RMySQL::MySQL(), 
+    dbname = "ksdatabase",
+    host = "cdrlshinyapps.cdkkdi6q6ptl.us-east-2.rds.amazonaws.com",
+    username = "cdrl",
+    password = "cdrl_ks"
+  )
+  })
+  
+  onStop(function() {
+    poolClose(my_db)
+  })
+  
   observe({
     if(input$tabsList == "lookupTab") {
       
