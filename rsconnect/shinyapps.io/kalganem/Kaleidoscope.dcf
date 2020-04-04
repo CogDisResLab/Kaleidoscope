@@ -1,0 +1,12 @@
+name: Kaleidoscope
+title: Kaleidoscope
+username:
+account: kalganem
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1977280
+bundleId: 2920327
+url: https://kalganem.shinyapps.io/Kaleidoscope/
+when: 1585089400.16642
+asMultiple: FALSE
+asStatic: FALSE
