@@ -1016,27 +1016,24 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
       s2 <- input$slider2
       
       url <- paste0("http://string-db.org/api/image/network?identifier=", strGene, "&required_score=",s,"&limit=",s2,"&species=9606&network_flavor=evidence")
-      t <- content(GET(url))
-      str_error <- grep("^\\{ \\\"Error", t)
-      if (length(str_error) == 0) {
+      t <- GET(url)
+      
+      if (t$status_code < 300) {
+        t <- content(t)
         
         output$myPlot <- renderPlot({
           plot.new()
           rasterImage(t,0,0,1,1)
         })
-        
-        
+
         urlString <- paste0("http://string-db.org/api/json/interaction_partners?identifiers=",strGene,"&species=9606&required_score=",s,"&limit=",s2)
         incProgress(0.3)
         fromJSON(content(GET(urlString))) -> tableString2
         select(bind_rows(lapply(tableString2, data.frame, stringsAsFactors = FALSE)), everything()) -> tableString2
         IdList <- c(strGene, pull(tableString2, preferredName_B))
-        
         add_row(tableString2, preferredName_B = strGene) -> tableString2
-        
         tableString2 %>% select(-preferredName_A, -stringId_A,-stringId_B,-ncbiTaxonId) %>% 
           rename(preferredName = preferredName_B) -> tableString2
-        
         
         incProgress(0.7)
         urlString <- paste0("http://string-db.org/api/json/resolve?identifiers=",paste(IdList,collapse ="%0D"),"&species=9606")
@@ -1044,8 +1041,6 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
         select(bind_rows(lapply(tableString1, data.frame, stringsAsFactors = FALSE)), preferredName, annotation) -> tableString1
         
         KJHB <<- pull(tableString1, preferredName)
-        
-        
         
         full_join(tableString1,tableString2) %>% select(preferredName, score, annotation, ends_with("score")) %>% arrange(desc(score)) %>% 
           dplyr::rename(Protein = preferredName, CombinedScore = score, Description = annotation,Neighborhood = nscore, 
