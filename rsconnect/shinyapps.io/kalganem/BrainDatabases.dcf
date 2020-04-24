@@ -1,0 +1,12 @@
+name: BrainDatabases
+title: BrainDatabases
+username:
+account: kalganem
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 597668
+bundleId: 3060159
+url: https://kalganem.shinyapps.io/BrainDatabases/
+when: 1587741986.90521
+asMultiple: FALSE
+asStatic: FALSE

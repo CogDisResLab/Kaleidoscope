@@ -23,6 +23,7 @@ library(data.table)
 library(reactable)
 library(pool)
 library(dbplyr)
+library(shinyalert)
 #library(promises)
 #library(future)
 #plan(multiprocess)
@@ -32,6 +33,20 @@ conflict_prefer("filter", "dplyr")
 conflict_prefer("show", "shinyjs")
 conflict_prefer("between", "dplyr")
 
+# db Connection ----
+
+my_db <- dbPool(
+    RMySQL::MySQL(), 
+    dbname = "ksdatabase",
+    host = "cdrlshinyapps.cdkkdi6q6ptl.us-east-2.rds.amazonaws.com",
+    username = "cdrl",
+    password = "cdrl_ks"
+    )
+
+
+onStop(function() {
+  poolClose(my_db)
+})
 
 # Functions -----
 
@@ -92,6 +107,91 @@ EnrichrBtn <- function(id, label = "Enrichr") {
     actionButton(ns("enrichrBtn1"), label, icon = icon("dna"))
   )
 }
+
+iLINCSBtn <- function(id, label = "iLINCS") {
+  # Create a namespace function using the provided id
+  ns <- NS(id)
+  tagList(
+    actionButton(ns("iLINCSBtn1"), label, icon = icon("dna"))
+  )
+}
+
+# uploading ds
+addingds <- function(ds) {
+  withProgress(message = 'adding dataset ...', value = 0.1, { 
+    
+    # tryCatch({
+    #     
+    #     
+    # })
+    
+    if(!is.data.frame(ds)) {stop("Make sure it's a dataframe")}
+    if(ncol(ds) != 4) {stop("Number of columns have to be 4")}
+    if(!all(colnames(ds) %in% c("Gene_Symbol", "Log2FC", "P_Value", "DataSet"))) {
+      stop("check columns names, they should be: Gene_Symbol, Log2FC, P_Value, DataSet")
+    }
+    
+    if(!is.character(ds$Gene_Symbol)) {stop("check that Gene_Symbol column is as charcter column")}
+    if(!is.character(ds$DataSet)) {stop("check that DataSet column is as charcter column")}
+    if(!is.numeric(ds$Log2FC)) {stop("check that Log2FC column is as charcter column")}
+    if(!is.numeric(ds$P_Value)) {stop("check that P_Value column is as charcter column")}
+    
+    tbl(my_db, "lookup_userdefined_meta") %>% 
+      collect() %>% pull(DataSet) -> existingds
+    
+    incProgress(0.3)
+    tbl(my_db, "lookup_new_meta") %>% 
+      collect() %>% pull(DataSet) -> existingds2
+    
+    if(any(ds$DataSet %>% unique() %in% c(existingds, existingds2))) {
+      stop("The DataSet name is not unique, please change it")}
+    
+    incProgress(0.4)
+    ds %>% na.omit(Gene_Symbol) %>% 
+      mutate(Gene_Symbol = toupper(Gene_Symbol), Group = "User-Defined_DS_sc") %>% 
+      mutate(Fold_Change = 2^Log2FC) %>% 
+      group_by(Gene_Symbol) %>% mutate(Fold_Change = EnvStats::geoMean(Fold_Change),
+                                       P_Value = EnvStats::geoMean(P_Value)
+      ) %>% ungroup() %>% distinct(Gene_Symbol, DataSet, .keep_all = T) %>% mutate( 
+        Log2FC = log2(Fold_Change),
+        Log2FCAbs = abs(Log2FC),
+        Fold_Change = ifelse(Fold_Change >= 1, Fold_Change, -1/Fold_Change)
+      ) %>% group_by(DataSet) %>% 
+      mutate(ecdf = ecdf(Log2FC)(Log2FC)*2-1, ecdfPlot = ifelse(ecdf < 0, ecdf * -1, ecdf), 
+             ecdfPlot = ifelse(Log2FC<0, ecdfPlot*-1,ecdfPlot)) %>% ungroup() %>% 
+      select(-ecdf) %>% mutate(Dir = ifelse(Log2FC>=0, "Up", "Down")) -> ds_2
+    
+    incProgress(0.7)
+    pre_sc_table <<- rbind(pre_sc_table, ds_2)
+    
+    message("Ds was added")
+    incProgress(0.9)
+  })
+  shinyalert("Thanks", "Your dataset was uploaded successfully", type = "success")
+  pre_sc_table
+  #"success"
+  
+  
+}
+
+pre_sc_table <- tibble(
+  Gene_Symbol = character(),
+  Log2FC = numeric(),
+  P_Value = numeric(),
+  DataSet = character(),
+  Fold_Change = numeric(),
+  Log2FCAbs = numeric(),
+  ecdfPlot = numeric(),
+  Dir = character(),
+  Group = character(),
+)
+
+ex_table <- tibble(
+  Gene_Symbol = c("Gene 1", "Gene 2", "Gene 3"),
+  Log2FC = c(1.23, -0.47, 2.84),
+  P_Value = c(0.09, 0.67, 0.94),
+  DataSet = c("XXX")
+)
 
 
 
@@ -331,10 +431,23 @@ CVListFull <- list(
 
 AddedListFullDop <- list()
 
+AddedListFullDop_sc <- list()
+
+
 
 BACellTypesList <- list(
   "Astro", "Endo", "Exc", "Inh", "Micro", "OPC", "Oligo"
 )
+
+# L1000 Genes List ----
+
+L1000Genes <- c('AARS','ABCF1','ABL1','ACAA1','ACAT2','ACLY','ADAM10','ADH5','PARP1','ADRB2','AGL','AKT1','ALAS1','ALDOA','ALDOC','SLC25A4','ANXA7','APBB2','BIRC2','BIRC5','APOE','APP','FAS','RHOA','ARHGAP1','ASAH1','ATF1','ATP1B1','ALDH7A1','ATP6V0B','BAD','BAX','CCND1','BCL2','BDH1','BID','BLMH','BLVRA','BMP4','BNIP3','BNIP3L','BPHL','BRCA1','BTK','BUB1B','C5','DDR1','CALM3','CALU','CAPN1','CAST','CASP2','CASP3','CASP7','CASP10','CAT','CBLB','CBR1','CBR3','CCNA2','CCNB1','CCND3','CCNF','CCNH','SCARB1','CD40','CD44','CD58','ADGRE5','CDK1','CDC20','CDC25A','CDC25B','CDC42','CDH3','CDK2','CDK4','CDK6','CDK7','CDKN1A','CDKN1B','CDKN2A','CEBPA','CEBPD','CENPE','CETN3','CHEK1','CHN1','CIRBP','CLTB','CLTC','COL1A1','COL4A1','CREB1','CRK','CRKL','CRYZ','CSK','CSNK1A1','CSNK1E','CSNK2A2','CSRP1','CTNND1','CTSD','CTSL','CYB561','DAG1','DAXX','DCK','DCTD','DDB2','GADD45A','DDX10','DECR1','DFFA','DFFB','DLD','DNM1','DNMT1','DNMT3A','DPH2','DSG2','TSC22D3','DUSP3','DUSP4','DUSP6','TOR1A','E2F2','ECH1','EDN1','EGF','EGFR','EGR1','EIF4EBP1','EIF4G1','EIF5','ELAVL1','CTTN','EPB41L2','EPHA3','EPHB2','EPRS','NR2F6','ERBB2','ERBB3','ETFB','ETS1','ETV1','EXT1','EZH2','FAH','PTK2B','FAT1','FDFT1','FGFR2','FGFR4','FHL2','FKBP4','FOXO3','FOS','FPGS','FUT1','FYN','SLC37A4','GAA','GABPB1','GALE','GAPDH','GATA2','GATA3','GFPT1','GHR','GLI2','GLRX','GNA11','GNA15','GNAI1','GNAI2','GNAS','SFN','GPC1','GPER1','GRB7','GRB10','GRN','NR3C1','CXCL2','GSTM2','GSTZ1','MSH6','GTF2A2','GTF2E2','HSD17B10','HADH','HDAC2','HIF1A','HK1','HLA-DMA','HLA-DRA','HMGCR','HMGCS1','HMOX1','HOXA5','HOXA10','HPRT1','HES1','DNAJB2','HSPA1A','HSPA4'
+                ,'HSPA8','HSPB1','HSPD1','DNAJB1','ICAM1','ICAM3','ID2','IDE','IFNAR1','IGF1R','IGF2R','IGFBP3','IGHMBP2','IKBKB','IL1B','IL4R','IL13RA1','ILK','INPP1','INSIG1','ITGAE','ITGB5','JUN','KCNK1','KIF5C','KIT','KTN1','LAMA3','STMN1','LBR','LGALS8','LIG1','LIPA','LOXL1','LRPAP1','LYN','SMAD3','MAN2B1','MAT2A','MBNL1','MCM3','ME2','MEF2C','MAP3K4','MEST','MIF','FOXO4','MMP1','MMP2','MNAT1','MSRA','MUC1','MYBL2','MYC','GADD45B','MYLK','MYO10','NCK1','NFATC3','NFATC4','NFE2L2','NFIL3','NFKB2','NFKBIA','NFKBIB','NFKBIE','NIT1','NMT1','NOS3','CNOT4','NOTCH1','PNP','NPC1','SLC11A2','NRAS','NUCB2','NUP88','NVL','ORC1','OXA1L','OXCT1','PAFAH1B1','PAFAH1B3','SERPINE1','PAK1','PCBD1','PCCB','PCK2','PCM1','PCMT1','PCNA','PDGFA','PFKL','PGAM1','PGM1','PHKA1','PHKB','PHKG2','PIK3C2B','PIK3C3','PIK3CA','PIN1','PLA2G4A','PLCB3','PLK1','PLP2','PLS1','PLSCR1','PMAIP1','PMM2','POLB','POLE2','POLR2I','POLR2K','PPARD','PPARG','PPIC','PPOX','PPP2R5A','PPP2R5E','PRCP','PRKACA','PRKCD','PRKCH','PRKCQ','MAPK9','MAPK13','MAP2K5','PRKX','PROS1','LGMN','HTRA1','PSMB8','PSMB10','PSMD2','PSMD4','PSMD9','PSMD10','PSME1','PSME2','PTGS2','PTK2','PTPN1','PTPN6','PTPN12','PTPRC','PTPRF','PTPRK','PXMP2','PXN','PYCR1','PYGL','RAB4A','RAB27A','RAC2','RAD9A','RAD51C','MOK','RALA','RALB','RALGDS','RAP1GAP','RASA1','RB1','KDM5A','RELB','RFC2','RFC5','RFNG','RFX5','RGS2','RHEB','RNH1','RPA1','RPA2','RPA3','MRPL12','RPN1','RPS5','RPS6','RPS6KA1','RSU1','RTN2','S100A4','S100A13','SATB1','SCP2','CCL2','SDHB','SGCB','SHB'
+                ,'SHC1','SKIV2L','SKP1','SLC1A4','SMARCA4','SMARCC1','SMARCD2','SNAP25','SNCA','SOX2','SOX4','SPAG4','SPP1','SPR','SPTAN1','SRC','STAT1','STAT3','STAT5B','AURKA','STK10','STX1A','STX4','STXBP1','STXBP2','SUPV3L1','SUV39H1','SYK','SYPL1','TARBP1','TBP','TBX2','TBXA2R','TCEA2','VPS72','TCTA','DYNLT3','TERT','TESK1','TFAP2A','TFDP1','TGFB3','TGFBR2','TIAM1','TIMP2','TJP1','TLE1','TLR4','TSPAN6','TSPAN4','TOP2A','TP53','TP53BP1','TP53BP2','TPD52L2','TPM1','TSTA3','TXNRD1','UBE2A','UGDH','NR1H2','USP1','VDAC1','WFS1','WRB','XBP1','XPNPEP1','ZFP36','ZNF131','ZMYM2','PAX8','CXCR4','IFRD2','MAPKAPK3','USP7','REEP5','ST7','KAT6A','PDHX','FOSL1','HMGA2','NCOA3','NRIP1','SMC1A','LAGE3','AXIN1','CDC45','FZD1','FZD7','HIST2H2BE','PIP4K2B','NCK2','DYRK3','DUSP11','RAE1','PIK3R3','NIPSNAP1','IKBKAP','HAT1','MAPKAPK5','BHLHE40','MKNK1','CASK','AKR7A2','RUVBL1','PSMG1','BECN1','MBTPS1','EED','CTNNAL1','RNMT','PEX11A','CREG1','INPP4B','IQGAP1','SOCS2','CFLAR','CDK5R1','ST3GAL5','IER3','SQSTM1','SLC5A6','CPNE3','CCNA1','TIMELESS','P4HA2','PLOD3','NOL3','SLC25A14','MPZL1','MAP7','DNAJA3','USP14','MTA1','PDLIM1','SMC3','PRPF4','CCNB2','CCNE2','SYNGR3','LPAR2','ARHGEF2','ZW10','AURKB','VAPB','NOLC1','UBE2L6','MAPKAPK2','CYTH1','ITGB1BP1','BCL7B','COPB2','ADGRG1','TM9SF2','MAP4K4','HOMER2','SH3BP5','PIGB','PSMF1','SPTLC2','TBPL1','BAG3','POLR1C','SPAG7','FEZ2','IKBKE','MTFR1','HS2ST1','IPO13','VGLL4','NUP93','UBE3C','EDEM1','TRAM2','CEP57','KIAA0100','HERPUD1','KIAA0355','USP6NL','CCP110','MLEC','TATDN2','MRPL19','SCRN1','EFCAB14','KEAP1','MELK','PLEKHM1','C2CD5','KIAA0753','C2CD2L','TOMM70A','KIAA0196','KLHL21','ARNT2'
+                ,'FAM20B','NCAPD2','PAN2','LPGAT1','KIF14','OXSR1','MVP','DMTF1','GNPDA1','HDAC6','PARP2','MAMLD1','DNAJB6','SMC4','ABCC5','ABCB6','DNM1L','TSPAN3','KIF20A','ARL4C','TRAP1','G3BP1','MBNL2','CEBPZ','SLC25A13','SORBS3','RBM6','TXNDC9','TRIM13','TRIB1','MFSD10','SLC35B1','TIMM17B','AKAP8','STUB1','NET1','SMNDC1','PAK4','TNIP1','IKZF1','TMEM5','HMG20B','MYL9','LYPLA1','PPIE','VAV3','LRRC41','CRTAP','VAT1','STK25','APPBP2','CHERP','HYOU1','RPP38','SLC35A1','DRAP1','PAICS','ST6GALNAC2','STAMBP','NPRL2','IGF2BP2','YKT6','CGRRF1','RRAGA','GNB5','EBP','CNPY3','YME1L1','TCFL5','KDM5B','POP4','ARPP19','ZNF274','MTHFD2','WASF3','UTP14A','FRS2','CLPX','PGRMC1','MALT1','CPSF4','BLCAP','TCERG1','RNPS1','TOMM34','PDIA5','MLLT11','EBNA1BP2','TMED10','ASCC3','SLC27A3','KIF2C','CCDC85B','TLK2','KDELR2','RAB31','B4GAT1','PAPD7','UBE2C','DUSP14','TOPBP1','PRSS23','PWP1','PKIG','CORO1A','LSM6','PSIP1','SLC2A6','NISCH','CHEK2','PRAF2','POLG2','CHP1','PNKP','ECD','DDX42','TWF2','CASC3','COG2','ATF5','MTF2','PUF60','RAB11FIP2','CLSTN1','FOXJ3','KIAA0907','EPN2','SACM1L','ATF6','RPIA','RAB21','SPEN','FBXO21','RBM34','WDTC1','XPO7','TBC1D9B','RRP1B','MYCBP2','CDK19','GPATCH8','MAST2','DCUN1D4','FCHO1','SNX13','ATP11B','JMJD6','RRS1','RRP12','SYNE2','PDS5A','CAMSAP2','ATMIN','TRIM2','KIAA1033','USP22','WDR7','JADE2','ARHGEF12','PPP1R13B','RRP8','NUDCD3','SIRT3','SLC35A3','ICMT','MACF1','SUZ12','KAT6B','NNT','ADAT1','TMEM50A','KLHDC2','ACOT9','SSBP2','NUP62','ARFIP2','LSM5','PLA2G15','TMEM2','ZNF318','FBXO7','SPDEF','BAMBI','BACE2','COG4','MPC2','CLIC4','C2CD2','TIPARP','TSKU','RNF167','LRP10','ZNF451','SENP6','RAI14','KIF1BP'
+                ,'TES','PHGDH','MYCBP','CHIC2','TIMM9','AKAP8L','ATP2C1','TRAPPC3','ATP5S','TNFRSF21','SESN1','HTATSF1','TMEM97','BZW2','CHMP4A','GTPBP8','DNAJC15','PACSIN3','RBM15B','HOOK2','SNX11','TIMM22','NENF','UBQLN2','ERO1L','DNTTIP2','PIK3R4','HDGFRP3','COPS7A','NSDHL','HEBP1','MTERF3','AMDHD2','ISOC1','MRPS16','FIS1','GOLT1B','GLOD4','GMNN','LAP3','NOSIP','DERA','SCCPDH','MRPS2','VPS28','HSD17B11','NUSAP1','SCAND1','CD320','NGRN','SNX7','ATP6V1D','ZNF589','PRKAG2','UBE2J1','EVL','HACD3','UFM1','LSR','DHRS7','CAB39','ARID4B','NUDT9','CYCS','TERF2IP','GFOD1','KCTD5','TMCO1','DHX29','EXOSC4','DDIT4','PAF1','P4HTM','SLC35F2','ZNF586','FBXL12','TEX10','YTHDF1','TXNL4B','HERC6','PIH1D1','PPP2R3C','FKBP14','CDCA4','PLEKHJ1','HEATR1','ANO10','UBR7','FAIM','ADI1','ABCF3','ENOSF1','LRRC16A','ANKRD10','STAP2','IARS2','NUP133','CNDP2','FAM63A','KDM3A','PECR','EAPP','CISD1','ZNF395','KLHL9','NPDC1','TM9SF3','PAK6','DUSP22','ADCK3','CIAPIN1','PLSCR3','SCYL3','LYRM1','ZMIZ1','MCOLN1','THAP11','ABHD6','TRIB3','POLD4','SQRDL','ENOPH1','PRUNE','SNX6','FASTKD5','ELAC2','ABHD4','MCUR1','RBKS','ATG3','NARFL','ZDHHC6','ACBD3','CERK','NT5DC2','ACD','INTS3','TRAK2','METRN','ELOVL6','TMEM109','CCDC86','TRAPPC6A','CHAC1','MBOAT7','PRR15L','CRELD2','FSD1','TCTN1','CHMP6','NPEPL1','FAM57A','NUP85','TCEAL4','DHDDS','DENND2D','FBXO11','CCDC92','COASY','WDR61','TSEN2','PRR7','ITFG1','GDPD5','GRWD1','ARID5B','TUBB6','PSRC1','ADO','HIST1H2BK','MICALL1','UBE3B','HN1L','SLC25A46','COG7','MAPK1IP1L','TBC1D31','H2AFV','RPL39L','CANT1','WIPF2','TICAM1','TXLNA','SPRED2','EML3','TMEM110
+                ','FAM69A')
+
 # UI ---- 
 ui <- 
   
@@ -365,7 +478,8 @@ ui <-
         menuItem("Lookup", tabName = "lookupTab", icon = icon("search")),
         #menuItem("Datasets", tabName = "DsInfo", icon = icon("wpexplorer")),
         menuItem("iLINCS?", tabName = "iLINCSTab", icon = icon("connectdevelop")),
-        menuItem("GWAS Catalog", tabName = "GWAS", icon = icon("thumbtack"))
+        menuItem("GWAS Catalog", tabName = "GWAS", icon = icon("thumbtack")),
+        menuItem("Upload", tabName = "uploadTab", icon = icon("thumbtack"))
         
       )
     ),
@@ -384,6 +498,7 @@ ui <-
         
       )),
       useShinyjs(),
+      useShinyalert(),
       tabItems(
         
         # STRING UI Tab ----
@@ -425,7 +540,9 @@ ui <-
                   sidebarLayout(
                     sidebarPanel(
                       radioButtons("inputChoice", label = "Input:", 
-                                   choices = list("Your own list" = "ownList", "Common hits" = "CommHits")),
+                                   choices = list("Your own list" = "ownList", "Common hits" = "CommHits",
+                                   "LINCS L1000 Genes" = "l1000")
+                                   ),
                       textInput("gene", "Enter target(s) separated by the selected separation character:",
                                 placeholder = "e.g. LDAH, DLG4", value = ""),
                       
@@ -452,7 +569,10 @@ ui <-
                       pickerInput(inputId="dbs9",label="Coronavirus",choices=CVListFull, options = list(`actions-box` = TRUE),
                                   multiple = TRUE),
                       
-                      pickerInput(inputId="dbs_added",label="Added",choices=AddedListFullDop, options = list(`actions-box` = TRUE),
+                      pickerInput(inputId="dbs_added",label="User Submitted",choices=AddedListFullDop, options = list(`actions-box` = TRUE),
+                                  multiple = TRUE),
+                      
+                      pickerInput(inputId="dbs_added_sc",label="Session Datasets",choices=AddedListFullDop_sc, options = list(`actions-box` = TRUE),
                                   multiple = TRUE),
                       
                       tags$hr(),
@@ -487,6 +607,8 @@ ui <-
                                               # ),
                                               verbatimTextOutput("targetListed"),
                                               actionButton("enrichrBtn2", "Enrichr", icon = icon("dna")),
+                                              #actionButton("iLINCSBtn1", "iLINCS", icon = icon("dna")),
+                                              downloadButton("iLINCS", "Download iLINCS sig"),
                                               #EnrichrBtn("enrichrBtn2"),
                                               downloadButton("down_1", "Download LookUp table"),
                                               tags$hr(),
@@ -736,6 +858,7 @@ ui <-
                                         
                                         switchInput(inputId = "GTEx_Par1",size = "mini", label = "Log", value = T),
                                         switchInput(inputId = "GTEx_Par2",size = "mini", label = "Cluster", value = T),
+                                        switchInput(inputId = "GTEx_Par3",size = "mini", label = "scale", value = F),
                                         plotOutput("GTExPlot1",height = "650px")
                                         
                                ),
@@ -795,6 +918,42 @@ ui <-
         tabItem("KalidInfo", 
                 fluidPage(
                   verbatimTextOutput("SoftInfo")
+                )
+        ),
+        # Uploading ds UI -----
+        tabItem("uploadTab", 
+                fluidPage(
+                  #useShinyjs(),
+                  #useShinyalert(),
+                  # Application title
+                  titlePanel("Upload Datasets into Kaleidoscope"),
+                  
+                  # Sidebar with a slider input for number of bins 
+                  sidebarLayout(
+                    sidebarPanel(
+                      
+                      fileInput("inputfile", "Upload your dataset as txt file", accept = ".txt"),
+                      actionButton("displaytbl", "Display"),
+                      actionButton("postit", "Upload into session"),
+                      tags$hr(),tags$hr(),
+                      "Example Table",
+                      tags$hr(),
+                      tableOutput("ex_tbl")
+                      
+                    ),
+                    
+                    # Show a plot of the generated distribution
+                    mainPanel(
+                      #tableOutput("tbl1"),
+                      verbatimTextOutput("uplaodingInfo"),
+                      tags$br(),
+                      "For Option 1 follow this link: ",
+                      tags$a(href="https://kalganem.shinyapps.io/ks_addingds/", 
+                             "https://kalganem.shinyapps.io/ks_addingds/"),
+                      tags$br(),
+                      reactableOutput("tbl1")
+                    )
+                  )
                 )
         )
         
@@ -907,6 +1066,14 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
   onStop(function() {
     poolClose(my_db)
   })
+  
+  tbl(my_db, "lookup_userdefined_meta") %>% 
+    collect() %>% pull(DataSet) %>% 
+    as.list() -> AddedListFullDop
+    
+  #AddedListFullDop <<- list(input$DSNameInput)
+  updatePickerInput(session, 'dbs_added', choices = AddedListFullDop)
+  
   
   observe({
     if(input$tabsList == "lookupTab") {
@@ -1184,7 +1351,25 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
     }
     
   })
+ 
   
+  
+  observe({
+    if(input$inputChoice == "l1000") {
+      updateTextInput(session, "gene", value = L1000Genes)
+    }
+    
+    else if (input$inputChoice == "ownList") {
+      updateTextInput(session, "gene", value = "")
+    }
+    
+    else if (input$inputChoice == "CommHits") {
+      updateTextInput(session, "gene", value = "")
+    }
+  })
+  
+  
+   
   # Lookup Results ----
   observeEvent(input$act, {
     #req(input$gene)
@@ -1206,8 +1391,12 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
       
       sel <- c(input$dbs,input$dbs2, input$dbs3, input$dbs4, input$dbs5, input$dbs6, input$dbs7, input$dbs8, input$dbs9)
       sel <- sel[sel!="Cell"& sel!="Region"]
+      
+      sel_users <- c(input$dbs_added)
+      sel_users_sc <- c(input$dbs_added_sc)
+      
       #print(sel)
-      selLength <- length(sel)
+      selLength <- length(c(sel, sel_users, sel_users_sc))
       
       # Seperator Options ---- 
       
@@ -1238,6 +1427,12 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
         
       }
       
+      else if (input$inputChoice == "l1000") {
+        #updateTextInput(session, "gene", value = KJHB)
+        #updateTextInput(session, "gene", value = L1000Genes)
+        genes <- L1000Genes
+      }
+      
       else if (input$inputChoice == "CommHits") {
         # tbl(my_db, "lookup") %>% mutate(Log2FCAbs = abs())
         # fullDataSet$Log2FCAbs <- abs(fullDataSet$Log2FC)
@@ -1258,7 +1453,15 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
         #   arrange(desc(Hits)) %>% ungroup() %>% 
         #   slice(1:input$CommTop2) -> commTable
         tbl(my_db, "lookup_new") %>% filter(DataSet %in% sel) %>% collect() %>% 
-          select(-row_names) -> fullDataSet
+          select(-row_names) -> half_table1
+        
+        tbl(my_db, "lookup_userdefined") %>% filter(DataSet %in% sel_users) %>% collect() %>% 
+          select(-row_names) -> half_table2
+        
+        
+        
+        
+        fullDataSet <- rbind(half_table1, half_table2,pre_sc_table)
         
         data.table::setorder(setDT(fullDataSet), DataSet,-Log2FCAbs)[, indx := seq_len(.N), DataSet][indx <= input$CommTop] %>%  
           select(Gene_Symbol, Group, Dir) %>% 
@@ -1400,12 +1603,32 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
       
       
       tbl(my_db, "lookup_new") %>% 
-      #fullDataSet %>% 
+        #fullDataSet %>% 
+        select(Gene_Symbol, Log2FC, Fold_Change, P_Value, ecdfPlot,DataSet, Group) %>%
+        filter(Gene_Symbol %in% genes, DataSet %in% sel) %>% collect() -> half_table
+      
+      tbl(my_db, "lookup_userdefined") %>% 
+        #fullDataSet %>% 
         select(Gene_Symbol, Log2FC, Fold_Change, P_Value, ecdfPlot,DataSet, Group) %>% 
-        filter(Gene_Symbol %in% genes, DataSet %in% sel) %>% collect() %>% 
+        filter(Gene_Symbol %in% genes, DataSet %in% sel_users) %>% 
+        collect() -> half_table2  
+      
+      pre_sc_table %>% select(Gene_Symbol, Log2FC, Fold_Change, P_Value, ecdfPlot,DataSet, Group) %>%
+        filter(Gene_Symbol %in% genes, DataSet %in% sel_users_sc) -> half_table3
+      
+      fullDataSet2 <- rbind(half_table, half_table2, half_table3) %>% 
         mutate(DataSet = gsub("\\(|\\)| ", "-", DataSet),
-               DataSet = gsub(",", "", DataSet)
-               )  -> fullDataSet2
+                    DataSet = gsub(",", "", DataSet)
+                     )
+        
+      
+      #tbl(my_db, "lookup_new") %>% 
+      #fullDataSet %>% 
+        #select(Gene_Symbol, Log2FC, Fold_Change, P_Value, ecdfPlot,DataSet, Group) %>% 
+        #filter(Gene_Symbol %in% genes, DataSet %in% sel) %>% collect() %>% 
+        #mutate(DataSet = gsub("\\(|\\)| ", "-", DataSet),
+         #      DataSet = gsub(",", "", DataSet)
+        #       )  -> fullDataSet2
       
       # fullDataSet_full %>% filter(DataSet %in% sel) %>% collect() %>% 
       #   mutate(DataSet = gsub("\\(|\\)| ", "-", DataSet),
@@ -1560,6 +1783,27 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             y = "Ratio"
           )
       })
+      
+      output$iLINCS <- downloadHandler(
+        filename = function() {
+          paste("iLINCS_Sig", ".txt", sep = "")
+        },
+        content = function(file) {
+          
+          fullDataSet2 %>% select(Gene_Symbol, Log2FC, P_Value) %>% 
+            mutate(FC = 2^Log2FC) %>% select(-Log2FC) %>% 
+            group_by(Gene_Symbol) %>% summarise(FC = EnvStats::geoMean(FC),
+                                             P_Value = EnvStats::geoMean(P_Value)) %>% 
+            ungroup() %>% mutate(Value_LogDiffExp = log2(FC)) %>% 
+            rename(Name_GeneSymbol = Gene_Symbol,
+                   Significance_pvalue = P_Value
+                                 ) %>% 
+            select(Name_GeneSymbol, Value_LogDiffExp, Significance_pvalue) -> lincs_sig
+          
+          
+          write_delim(lincs_sig, file, delim = "\t")
+        }
+      )
       
       output$down_1 <- downloadHandler(
         filename = function() {
@@ -2448,6 +2692,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
                  collect() %>% column_to_rownames("row_names"),
                annotation_colors = GTExColoredGrouped,
                fontsize_col = 8,
+               #scale = if(input$GTEx_Par3) {"row"} else "none",
                cluster_rows = if(length(GTEx1Genes1)>1) {T} else {F},
                cluster_col = if(input$GTEx_Par2) {T} else {F}
                
@@ -2583,6 +2828,67 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
   #   shinyjs::show("GTExPlot2")
   # 
   # })
+  
+  output$uplaodingInfo <- renderText(
+    "Two options to upload datasets:
+    1. to Server: The dataset will be uploaded to the server.
+    Choosing this option: 
+    - The dataset will always be there, even if you close the tab and come back again.
+    - The dataset will be available to other users.
+                      
+    2. to Session: The dataset will be uploaded to just into your current session
+     Choosing this option will: 
+     - The dataset will be available in your current session, if you close the tab 
+      it will be deleted and you have to upload it again. 
+     - The dataset will be NOT be available to other users."
+  )
+  
+  
+  output$ex_tbl <- renderTable(ex_table)
+  # Uploading Server -----
+  observeEvent(input$displaytbl, {
+    req(input$inputfile)
+    
+    output$tbl1 <- renderReactable({
+      targetFile <- input$inputfile
+      finalTable <- read_delim(targetFile$datapath, delim = "\t")
+      reactable(sample_n(finalTable, 10) %>% mutate_if(is.numeric, round, 3), 
+                defaultColDef = colDef(
+                  #header = function(value) gsub("\\w+>", "kjn", value, fixed = TRUE),
+                  cell = function(value) format(value, nsmall = 1),
+                  align = "center",
+                  minWidth = 70,
+                  headerStyle = list(background = "#f7f7f8")
+                )
+      )
+    })
+
+  }
+  )
+  
+  observeEvent(input$postit, {
+    req(input$inputfile)
+    targetFile <- input$inputfile
+    finalTable <- read_delim(targetFile$datapath, delim = "\t")
+    test <- tryCatch(addingds(finalTable), error = function(e) e$message)
+    
+    if(is.data.frame(test)) {
+      updatePickerInput(session, 'dbs_added_sc', choices = test$DataSet %>% unique())
+      print("where is it?")
+    }
+    else {
+      shinyalert("Opps", test, type = "error")
+    }
+    #try(
+    #addingds(finalTable)
+    #, outFile = "Wrong")
+    #try()
+  })
+  
+  
+  
+  
+  
   
   
 }
