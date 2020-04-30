@@ -479,7 +479,7 @@ ui <-
         #menuItem("Datasets", tabName = "DsInfo", icon = icon("wpexplorer")),
         menuItem("iLINCS?", tabName = "iLINCSTab", icon = icon("connectdevelop")),
         menuItem("GWAS Catalog", tabName = "GWAS", icon = icon("thumbtack")),
-        menuItem("Upload", tabName = "uploadTab", icon = icon("thumbtack"))
+        menuItem("Upload", tabName = "uploadTab", icon = icon("upload"))
         
       )
     ),
@@ -1398,6 +1398,8 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
       #print(sel)
       selLength <- length(c(sel, sel_users, sel_users_sc))
       
+      sel_all <- c(sel, sel_users, sel_users_sc)
+      
       # Seperator Options ---- 
       
       if (input$sepChoice == " ") {
@@ -1778,7 +1780,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
                 plot.subtitle = element_text(hjust = 0.5, size = 10)
           ) + labs(
             title = "Lookup Hits",
-            subtitle = paste0("Using ", as.character(length(sel)), " Datasets"),
+            subtitle = paste0("Using ", as.character(selLength), " Datasets"),
             x = "Gene",
             y = "Ratio"
           )
@@ -2075,10 +2077,10 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
         output$CorPlot <- renderPlot({
           
           
-          if (FoundGenesLength > 4 & length(sel) >= 2 ) {
+          if (FoundGenesLength > 4 & selLength >= 2 ) {
             #{if (input$corGenes == "fullSig") {fullDataSet_full} else {fullDataSet2}} %>% 
             fullDataSet2 %>% 
-              filter(DataSet %in% sel) %>% 
+              filter(DataSet %in% sel_all) %>% 
               filter(!is.na(Gene_Symbol), !is.na(Log2FC)) %>%
               select(Gene_Symbol, Log2FC, DataSet) %>% 
               distinct(Gene_Symbol, DataSet, .keep_all = T) %>% 
@@ -2682,6 +2684,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
     
     tbl(my_db, "gtex_median_expr") %>% filter(Description %in% GTEx1Genes1) %>% 
       select(-row_names, -gene_id) %>% collect() %>% 
+      group_by(Description) %>% summarise_if(is.numeric, mean, na.rm = T) %>% 
       column_to_rownames("Description") %>% 
       as.matrix() -> geneExpMedianFinal
     
