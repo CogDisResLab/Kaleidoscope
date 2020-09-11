@@ -428,6 +428,9 @@ CVListFull <- list(
                    )
 
 
+AntidepressantsListFullDop <- list()
+
+ADListFullDop <- list()
 
 AddedListFullDop <- list()
 
@@ -555,6 +558,10 @@ ui <-
                       pickerInput(inputId="dbs3",label="MDD",choices=mddListFullDop, options = list(`actions-box` = TRUE),
                                   multiple = TRUE),
                       pickerInput(inputId="dbs4",label="Antipsychotics",choices=AntipsychoticsListFullDop, options = list(`actions-box` = TRUE),
+                                  multiple = TRUE),
+                      pickerInput(inputId="dbs10",label="Antidepressants",choices=AntidepressantsListFullDop, options = list(`actions-box` = TRUE),
+                                  multiple = TRUE),
+                      pickerInput(inputId="dbs11",label="Alzheimer's Disease",choices=ADListFullDop, options = list(`actions-box` = TRUE),
                                   multiple = TRUE),
                       pickerInput(inputId="dbs5",label="Insulin Signaling Inhibition",choices=InsulinListFullDop, options = list(`actions-box` = TRUE),
                                   multiple = TRUE),
@@ -1067,12 +1074,29 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
     poolClose(my_db)
   })
   
+  
+  
+  
   tbl(my_db, "lookup_userdefined_meta") %>% 
-    collect() %>% pull(DataSet) %>% 
-    as.list() -> AddedListFullDop
-    
+    collect() -> us_def_ds
+  
+    #as.list() -> AddedListFullDop
+  updatePickerInput(session, 'dbs10', choices = us_def_ds %>% 
+                      filter(Group == "ATD") %>% pull(DataSet) %>% as.list())
+  
+  updatePickerInput(session, 'dbs11', choices = us_def_ds %>% 
+                      filter(Group == "AD") %>% pull(DataSet) %>% as.list())
+  
+  updatePickerInput(session, 'dbs3', choices = us_def_ds %>% 
+                      filter(Group == "MDD") %>% pull(DataSet) %>% as.list() %>% c(mddListFullDop, .))
+  
+  updatePickerInput(session, 'dbs4', choices = us_def_ds %>% 
+                      filter(Group == "AP") %>% pull(DataSet) %>% as.list() %>% c(AntipsychoticsListFullDop, .))
+  
+  #updatePickerInput(session, 'dbs_added', choices = AddedListFullDop)
   #AddedListFullDop <<- list(input$DSNameInput)
-  updatePickerInput(session, 'dbs_added', choices = AddedListFullDop)
+  updatePickerInput(session, 'dbs_added', choices = us_def_ds %>% 
+                      filter(!Group %in% c("ATD", "AD", "MDD", "AP")) %>% pull(DataSet) %>% as.list())
   
   
   observe({
@@ -1389,7 +1413,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
       #hideTab(LUResults,"HM5")
       notFound <- NULL
       
-      sel <- c(input$dbs,input$dbs2, input$dbs3, input$dbs4, input$dbs5, input$dbs6, input$dbs7, input$dbs8, input$dbs9)
+      sel <- c(input$dbs,input$dbs2, input$dbs3, input$dbs4, input$dbs5, input$dbs6, input$dbs7, input$dbs8, input$dbs9, input$dbs10, input$dbs11)
       sel <- sel[sel!="Cell"& sel!="Region"]
       
       sel_users <- c(input$dbs_added)
@@ -1454,10 +1478,10 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
         #   rename(Up = All_Up, Down = All_Down) %>% 
         #   arrange(desc(Hits)) %>% ungroup() %>% 
         #   slice(1:input$CommTop2) -> commTable
-        tbl(my_db, "lookup_new") %>% filter(DataSet %in% sel) %>% collect() %>% 
+        tbl(my_db, "lookup_new") %>% filter(DataSet %in% sel_all) %>% collect() %>% 
           select(-row_names) -> half_table1
         
-        tbl(my_db, "lookup_userdefined") %>% filter(DataSet %in% sel_users) %>% collect() %>% 
+        tbl(my_db, "lookup_userdefined") %>% filter(DataSet %in% sel_all) %>% collect() %>% 
           select(-row_names) -> half_table2
         
         
@@ -1607,12 +1631,12 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
       tbl(my_db, "lookup_new") %>% 
         #fullDataSet %>% 
         select(Gene_Symbol, Log2FC, Fold_Change, P_Value, ecdfPlot,DataSet, Group) %>%
-        filter(Gene_Symbol %in% genes, DataSet %in% sel) %>% collect() -> half_table
+        filter(Gene_Symbol %in% genes, DataSet %in% sel_all) %>% collect() -> half_table
       
       tbl(my_db, "lookup_userdefined") %>% 
         #fullDataSet %>% 
         select(Gene_Symbol, Log2FC, Fold_Change, P_Value, ecdfPlot,DataSet, Group) %>% 
-        filter(Gene_Symbol %in% genes, DataSet %in% sel_users) %>% 
+        filter(Gene_Symbol %in% genes, DataSet %in% sel_all) %>% 
         collect() -> half_table2  
       
       pre_sc_table %>% select(Gene_Symbol, Log2FC, Fold_Change, P_Value, ecdfPlot,DataSet, Group) %>%
@@ -1889,9 +1913,11 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             
             col = if(input$HM_Par1 %in% c("Log2FC", "FC")) hmcol2
             else c(colorRampPalette(c("#FFFF00", "#ffff87"))(100), 
-                   colorRampPalette(c("#ffffc2", "white"))(50), 
-                   colorRampPalette(c("white", "#ffb8b8"))(50),
+                   colorRampPalette(c("#ffffa9", "white"))(50), 
+                   colorRampPalette(c("white", "#ff8686"))(50),
                    colorRampPalette(c("#ff5c5c", "red"))(100))
+            
+            #c(-1, -0.99999,-0.25 ,0, 0.25 ,0.99999, 1)
             ,
             
             #col = hmcol2,
@@ -1905,9 +1931,9 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
                           seq(1,input$heatmapTH1,length=50))
                       } 
                       else c(seq(-1,-0.9951,length=100),
-                             seq(-0.995,-0.35,length=50),
+                             seq(-0.995,-0.25,length=50),
                              0,
-                             seq(0.35,0.995,length=50),
+                             seq(0.25,0.995,length=50),
                              seq(0.9951,1,length=100))
             ,
             annotation_col = if(input$HM_Par2) HM_annoCol else NA,
@@ -2073,14 +2099,14 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
       #   cormatrRes<-rcorr(as.matrix(cormatr), type = "pearson")
       #   cormatrRes$r[cormatrRes$n<5]<-0 # ignore less than five observations
         
-        
+      #fullDataSet2 ->> test_ds
         output$CorPlot <- renderPlot({
           
           
           if (FoundGenesLength > 4 & selLength >= 2 ) {
             #{if (input$corGenes == "fullSig") {fullDataSet_full} else {fullDataSet2}} %>% 
             fullDataSet2 %>% 
-              filter(DataSet %in% sel_all) %>% 
+              #filter(DataSet %in% sel_all) %>% 
               filter(!is.na(Gene_Symbol), !is.na(Log2FC)) %>%
               select(Gene_Symbol, Log2FC, DataSet) %>% 
               distinct(Gene_Symbol, DataSet, .keep_all = T) %>% 

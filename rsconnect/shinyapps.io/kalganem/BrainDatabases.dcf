@@ -5,8 +5,9 @@ account: kalganem
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 597668
-bundleId: 3085899
+bundleId: 3247773
 url: https://kalganem.shinyapps.io/BrainDatabases/
-when: 1588253053.71836
+when: 1591716491.77311
 asMultiple: FALSE
 asStatic: FALSE
+ignoredFiles: f_page.html|footer.html|header.html|css/academic.css|css/reveal_custom.min.css|js
