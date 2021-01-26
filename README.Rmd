@@ -7,9 +7,6 @@ output:
     variant: markdown_github
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 ## Kaleidoscope
 
