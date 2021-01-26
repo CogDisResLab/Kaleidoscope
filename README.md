@@ -12,4 +12,4 @@ without specific bioinformatics expertise.
 Workflow
 --------
 
-![Kaleidoscope Workflow](figures/KS_WorkflowFigure.png)
+![Kaleidoscope Workflow](Figures/KS_WorkflowFigure.png)
