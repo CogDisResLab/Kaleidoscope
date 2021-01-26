@@ -18,5 +18,5 @@ Kaleidoscope provides easy access to several databases and tools under a unified
 
 ## Workflow
 
-![Kaleidoscope Workflow](figures/KS_WorkflowFigure.png)
+![Kaleidoscope Workflow](Figures/KS_WorkflowFigure.png)
 
