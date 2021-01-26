@@ -5,9 +5,9 @@ account: kalganem
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1977280
-bundleId: 3247798
+bundleId: 3992560
 url: https://kalganem.shinyapps.io/Kaleidoscope/
-when: 1591716870.77205
+when: 1608047287.48176
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: f_page.html|footer.html|header.html|css/academic.css|css/reveal_custom.min.css|js
+ignoredFiles: f_page.html|footer.html|gsea_go_pathways_7-1.txt|gsea_report_for_na_neg_1561394485305.txt|gsea_report_for_na_neg_1561394485305.xls|gsea_table_scz_new.txt|gsea_table_scz.txt|gsea_tests.R|header.html|Human_GO_AllPathways_with_GO_iea_June_20_2019_symbol.gmt|path_lookup.R|Rplot.png|Rplot01.png|Rplot02.png|Rplot03.png|Untitled.R|css/academic.css|css/reveal_custom.min.css|R/.DS_Store

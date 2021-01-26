@@ -28,428 +28,20 @@ library(shinyalert)
 #library(future)
 #plan(multiprocess)
 
+theme_set(theme_bw())
+
+# solve conflicts
 conflict_prefer("box", "shinydashboard")
 conflict_prefer("filter", "dplyr")
 conflict_prefer("show", "shinyjs")
 conflict_prefer("between", "dplyr")
 
-# db Connection ----
-
-my_db <- dbPool(
-    RMySQL::MySQL(), 
-    dbname = "ksdatabase",
-    host = "cdrlshinyapps.cdkkdi6q6ptl.us-east-2.rds.amazonaws.com",
-    username = "cdrl",
-    password = "cdrl_ks"
-    )
-
-
-onStop(function() {
-  poolClose(my_db)
-})
-
-# Functions -----
-
-modColDef <- function(x) {
-  colDef(name = gsub(".+>", "", x))
-  
-} 
-
-creatGroups <- function(x) {
-  y <- tibble(name = as.character(), columns = as.character())
-  i <- 1
-  for (i in 1:length(x)) {
-    y <- rbind(y, tibble(name = gsub(">\\w+", "", x[i]), 
-                         columns = list(x %>% 
-                                          grep(gsub(">\\w+", "", x[i]),., value = T))
-    ))
-    
-    i <- i +1
-  }
-  y
-}
-
-modColGroups <- function(x) {
-  colGroup(name = gsub(">\\w+", "", x), columns = x)
-}
-
-firstLetterCap <- function(x) {
-  x <- gsub(" ", "", x)
-  x <- tolower(x)
-  x <- strsplit(x,"")
-  x[[1]][1] <- toupper(x[[1]][1])
-  paste(x[[1]],collapse = "")
-}
-
-gm_mean = function(x, na.rm=TRUE){
-  exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
-}
-
 '%ni%' <- Negate('%in%')
 
-getEnrichrLink <- function(x) {
-  if(is_empty(x) || x == "") {
-  paste0("https://amp.pharm.mssm.edu/Enrichr/")
-  }
-  else {
-    r <- jsonlite::fromJSON(content(POST("http://amp.pharm.mssm.edu/Enrichr/addList", 
-                                         body = list(list = x)), as = "text")) 
-  Sys.sleep(1)
-  paste0("https://amp.pharm.mssm.edu/Enrichr/enrich?dataset=", r$shortId)
-  }
-}
+# load GSEA files
+go_ids_df_2 <- read_delim("data/gsea_go_pathways_alldbs.txt", delim = "\t", col_names = T)
+gsea_scz_df <- read_delim("data/gsea_table_scz_new_all_dbs.txt", delim = "\t")
 
-# enrichr btn module
-EnrichrBtn <- function(id, label = "Enrichr") {
-  # Create a namespace function using the provided id
-  ns <- NS(id)
-  tagList(
-    actionButton(ns("enrichrBtn1"), label, icon = icon("dna"))
-  )
-}
-
-iLINCSBtn <- function(id, label = "iLINCS") {
-  # Create a namespace function using the provided id
-  ns <- NS(id)
-  tagList(
-    actionButton(ns("iLINCSBtn1"), label, icon = icon("dna"))
-  )
-}
-
-# uploading ds
-addingds <- function(ds) {
-  withProgress(message = 'adding dataset ...', value = 0.1, { 
-    
-    # tryCatch({
-    #     
-    #     
-    # })
-    
-    if(!is.data.frame(ds)) {stop("Make sure it's a dataframe")}
-    if(ncol(ds) != 4) {stop("Number of columns have to be 4")}
-    if(!all(colnames(ds) %in% c("Gene_Symbol", "Log2FC", "P_Value", "DataSet"))) {
-      stop("check columns names, they should be: Gene_Symbol, Log2FC, P_Value, DataSet")
-    }
-    
-    if(!is.character(ds$Gene_Symbol)) {stop("check that Gene_Symbol column is as charcter column")}
-    if(!is.character(ds$DataSet)) {stop("check that DataSet column is as charcter column")}
-    if(!is.numeric(ds$Log2FC)) {stop("check that Log2FC column is as charcter column")}
-    if(!is.numeric(ds$P_Value)) {stop("check that P_Value column is as charcter column")}
-    
-    tbl(my_db, "lookup_userdefined_meta") %>% 
-      collect() %>% pull(DataSet) -> existingds
-    
-    incProgress(0.3)
-    tbl(my_db, "lookup_new_meta") %>% 
-      collect() %>% pull(DataSet) -> existingds2
-    
-    if(any(ds$DataSet %>% unique() %in% c(existingds, existingds2))) {
-      stop("The DataSet name is not unique, please change it")}
-    
-    incProgress(0.4)
-    ds %>% na.omit(Gene_Symbol) %>% 
-      mutate(Gene_Symbol = toupper(Gene_Symbol), Group = "User-Defined_DS_sc") %>% 
-      mutate(Fold_Change = 2^Log2FC) %>% 
-      group_by(Gene_Symbol) %>% mutate(Fold_Change = EnvStats::geoMean(Fold_Change),
-                                       P_Value = EnvStats::geoMean(P_Value)
-      ) %>% ungroup() %>% distinct(Gene_Symbol, DataSet, .keep_all = T) %>% mutate( 
-        Log2FC = log2(Fold_Change),
-        Log2FCAbs = abs(Log2FC),
-        Fold_Change = ifelse(Fold_Change >= 1, Fold_Change, -1/Fold_Change)
-      ) %>% group_by(DataSet) %>% 
-      mutate(ecdf = ecdf(Log2FC)(Log2FC)*2-1, ecdfPlot = ifelse(ecdf < 0, ecdf * -1, ecdf), 
-             ecdfPlot = ifelse(Log2FC<0, ecdfPlot*-1,ecdfPlot)) %>% ungroup() %>% 
-      select(-ecdf) %>% mutate(Dir = ifelse(Log2FC>=0, "Up", "Down")) -> ds_2
-    
-    incProgress(0.7)
-    pre_sc_table <<- rbind(pre_sc_table, ds_2)
-    
-    message("Ds was added")
-    incProgress(0.9)
-  })
-  shinyalert("Thanks", "Your dataset was uploaded successfully", type = "success")
-  pre_sc_table
-  #"success"
-  
-  
-}
-
-pre_sc_table <- tibble(
-  Gene_Symbol = character(),
-  Log2FC = numeric(),
-  P_Value = numeric(),
-  DataSet = character(),
-  Fold_Change = numeric(),
-  Log2FCAbs = numeric(),
-  ecdfPlot = numeric(),
-  Dir = character(),
-  Group = character(),
-)
-
-ex_table <- tibble(
-  Gene_Symbol = c("Gene 1", "Gene 2", "Gene 3"),
-  Log2FC = c(1.23, -0.47, 2.84),
-  P_Value = c(0.09, 0.67, 0.94),
-  DataSet = c("XXX")
-)
-
-
-
-# Global Varaibles ----
-dbListFull <- list("Groups" = c("Region", "Cell"),
-                   
-                   # Region Level Datasets
-                   "Region Level" = c(
-                     "Stanley Database" = "Stanley",
-                     "Mt.Sinai ACC" = "MtSinaiACC",
-                     "Mt.Sinai DLPFC" = "MtSinaiDLPFC",
-                     "Mt.Sinai TPA" = "MtSinaiTPA",
-                     "Mt.Sinai MTA" = "MtSinaiMTA",
-                     "Gandal Microarray" = "gandalMicro",
-                     "Gandal RNAseq" = "gandalRNAseq", 
-                     "CommonMind DLPFC Re 1"="CommonMind_DLPFC",
-                     "barnesAll",
-                     "barnesFemale",
-                     "barnesMale",
-                     "Iwamoto_BA10_SCZ",
-                     "Iwamoto_BA46_SCZ",
-                     "MaycoxAll","MaycoxFemale", "MaycoxMale"
-                   ),
-                   
-                   # Cell Level Datasets
-                   "Cell Level" = c(
-                     "Superficial_Neurons", "Deep_Neurons", 
-                     "Superficial_Deep_Neurons",
-                     "hiPSC_Neuron", 
-                     "hiPSC_NPC1",
-                     "Blood mRNA" = "BloodmRNA",
-                     "DISC1 RNAseq" = "DISC1_RNA",
-                     "DISC1 Proteomics" = "DISC1_Prot",
-                     "Lewis_2015_L3",
-                     "Lewis_2015_L5",
-                     "Lewis_2017_L3",
-                     "Lewis_2017_L5",
-                     "PietersenAllParvalbumin","PietersenFemaleParvalbumin", "PietersenFemalePyramidal",
-                     "PietersenMaleParvalbumin" , "PietersenMalePyramidal",     "PietersenAllPyramidal"
-                   )
-                   
-)  
-
-BSRegions <- list(
-  "Amygdaloid Complex (AMY)" = "AMY", 
-  "Dorsolateral Prefrontal Cortex (DFC)" = "DFC", 
-  "Inferolateral Temporal Cortex (ITC)" = "ITC",
-  "Superior Temporal Cortex (STC)" = "STC",
-  "Ventrolateral Prefrontal Cortex (VFC)" = "VFC",
-  "Posteroventral (inferior) Parietal Cortex (IPC)" = "IPC", 
-  "Primary Visual Cortex (V1C)" = "V1C",
-  "Hippocampus (HIP)" = "HIP",
-  "Medial Prefrontal Cortex (MFC)" = "MFC", 
-  "Primary Auditory Cortex (A1C)" = "A1C"
-)
-
-dbListFullDop <- list(
-  "GNS PNU" = "DP_PNU", 
-  "PD Lat" = "DP_Lat", 
-  "PD Med" = "DP_Med",
-  "PD Sup" = "DP_Sup",
-  "MidBrain Cocaine" = "DP_coc"
-)
-
-dbListGTEx <- list(
-  "Amygdala" = "Amygdala", 
-  "Frontal Cortex" = "Frontal Cortex", 
-  "Anterior Cingulate ortex" = "Anterior_cingulate_cortex",
-  "Hypothalamus" = "Hypothalamus",
-  "Caudate Basal Ganglia" = "Caudate Basal Ganglia",
-  "Hippocampus" = "Hippocampus"
-)
-
-
-mddListFullDop <- list(
-  "Gandal_MDD" = "Gandal_MDD",
-  "DLPFC Females" = "DLPFC_FemalesMDD",
-  "DLPFC Males" = "DLPFC_MalesMDD",
-  "BA11 Females" = "BA11_FemalesMDD",
-  "BA11 Males" = "BA11_MalesMDD",
-  "BA25 Females" = "BA25_FemalesMDD",
-  "BA25 Males" = "BA25_MalesMDD",
-  "aINS Females" = "aINS_FemalesMDD",
-  "aINS Males" = "aINS_MalesMDD",
-  "vSUB Females" = "vSUB_FemalesMDD",
-  "vSUB Males" = "vSUB_MalesMDD",
-  "NAc Females" = "NAc_FemalesMDD",
-  "NAc Males" = "NAc_MalesMDD",
-  "Iwamoto_BA10_MDD",
-  "Disc_MDD_Proteomics",
-  "Benoit_Mouse_PFC",
-  "Benoit_Mouse_NAC", 
-  #"D3 Proteomics", 
-  "D3 RNAseq",
-  "Arion_LCM_MDD",
-  "Chang_ACC_Female",
-  "Chang_ACC_Male",
-  "Chang_ACC1",
-  "Chang_ACC2",
-  "Chang_ACC3",
-  "Chang_AMY1",
-  "Chang_AMY2",
-  "Chang_DLPFC_Female",
-  "Chang_DLPFC_Male",
-  "Chang_DLPFC",
-  "Chang_OrbitalVentralPrefrontalCortex",
-  "ALS D1", 
-  "ALS D2"
-  
-)
-
-bpdListFullDop <- list(
-  "Iwamoto_BA10_BPD",
-  "Iwamoto_BA46_BPD" 
-)
-
-AntipsychoticsListFullDop <- list(
-  "CLZ_high_Colantuoni (4031)" = "CLZ_high_Colantuoni (4031)",
-  "CLZ_medium_Colantuoni(4031)" = "CLZ_medium_Colantuoni(4031)",
-  "CLZ-low-Colantuoni(4031)"  = "CLZ-low-Colantuoni(4031)",
-  "HAL medium Colantuoni (4031)" = "HAL medium Colantuoni (4031)",
-  "HAL High Colantuoni (4031)" = "HAL High Colantuoni (4031)",
-  "HAL Low Colantuoni (4031)" = "HAL Low Colantuoni (4031)",
-  
-  "HAL_2h_25uM_glia (89873)" = "HAL_2h_25uM_glia (89873)",
-  "QUE_1uM_4d GSE125325" = "QUE_1uM_4d GSE125325",
-  "QUE-1uM_2d GSE125325" = "QUE-1uM_2d GSE125325",
-  
-  "HAL_3mgkg_30d (Kim 2018)_GSE677" = "HAL_3mgkg_30d (Kim 2018)_GSE677",
-  "CLZ-1h (Korostynski 2013)_GSE48" = "CLZ-1h (Korostynski 2013)_GSE48",
-  "CLZ-2h (Korostynski 2013)" = "CLZ-2h (Korostynski 2013)",
-  
-  "CL-4h (Korostynski 2013)" = "CL-4h (Korostynski 2013)",
-  "CLZ-8h (Korostynski 2013)" = "CLZ-8h (Korostynski 2013)",
-  "RIS-8h (Korostynski 2013)" = "RIS-8h (Korostynski 2013)",
-  
-  "RIS-4h (Korostynski 2013)" = "RIS-4h (Korostynski 2013)",
-  "RIS-2h (Korostynski 2013)" = "RIS-2h (Korostynski 2013)",
-  "RIS-1h (Korostysnki 2013)" = "RIS-1h (Korostysnki 2013)",
-  
-  "HAL_0.25mgkg_HIP_GSE66275" = "HAL_0.25mgkg_HIP_GSE66275",
-  "HAL_0.25mgkg_fCTX_GSE66275" = "HAL_0.25mgkg_fCTX_GSE66275",
-  "HAL_0.25mgkg_STR_GSE66275" = "HAL_0.25mgkg_STR_GSE66275",
-  
-  "RIS_5mgkg_21D_HIP_GSE66275" = "RIS_5mgkg_21D_HIP_GSE66275",
-  "RIS_5mgkg_21D_STr_GSE66275" = "RIS_5mgkg_21D_STr_GSE66275",
-  "RIS_5mgkg_21d_CTX_GSE66275" = "RIS_5mgkg_21d_CTX_GSE66275",
-  
-  "QUE_Str_100uM_GSE45229 " = "QUE_Str_100uM_GSE45229 ",      
-  "QUE_Str_10uM_GSE45229" = "QUE_Str_10uM_GSE45229",
-  "QUE_FrCTX_100uM_GSE45229" = "QUE_FrCTX_100uM_GSE45229",
-  
-  "QUE_FrCTX_10uM_GSE45229" = "QUE_FrCTX_10uM_GSE45229",
-  "HAL_FrCTX_1uM_GSE45229" = "HAL_FrCTX_1uM_GSE45229",
-  "HAL_FrCTX_0.3uM_GSE45229" = "HAL_FrCTX_0.3uM_GSE45229",
-  
-  "HAL_Str_1uM_GSE45229" = "HAL_Str_1uM_GSE45229",
-  "HAL_Str_0.3uM_GSE45229" = "HAL_Str_0.3uM_GSE45229",
-  "CLZ 3mgkg 1hr 48955" = "CLZ 3mgkg 1hr 48955"     ,    
-  "RIS 0.5mgkg 1hr 48955" = "RIS 0.5mgkg 1hr 48955",
-  "HAL 1mgkg 1hr 48955" = "HAL 1mgkg 1hr 48955",
-  "CLZ 3mgkg 2hr 48955" = "CLZ 3mgkg 2hr 48955",
-  
-  "RIS 0.5mgkg 2hr 48955 " =  "RIS 0.5mgkg 2hr 48955 ",
-  "HAL 1mgkg 2hr 48955" = "HAL 1mgkg 2hr 48955",
-  "RIS_0.5mgkg_8hr_GSE48955" = "RIS_0.5mgkg_8hr_GSE48955",
-  
-  "HAL_1mgkg_8hr_GSE48955" = "HAL_1mgkg_8hr_GSE48955",
-  "CLZ_3mgkg_8hr_GSE48955" = "CLZ_3mgkg_8hr_GSE48955",
-  "RIS_0.5mgkg_4hr_GSE48955" = "RIS_0.5mgkg_4hr_GSE48955",
-  
-  "HAL_1mgkg_4hr_GSE48955" = "HAL_1mgkg_4hr_GSE48955",
-  "CLZ_3mgkg_4hr_GSE48955" = "CLZ_3mgkg_4hr_GSE48955",
-  "CLZ_12wk_12mgkg_GSE6467" = "CLZ_12wk_12mgkg_GSE6467"   , 
-  "HAL_12wk_1.6mgkg_GSE6467" = "HAL_12wk_1.6mgkg_GSE6467",
-  "HAL_4wk_1.6mgkg_GSE6511" = "HAL_4wk_1.6mgkg_GSE6511",
-  "CLZ_4wk_1.6mgkg_GSE6511" = "CLZ_4wk_1.6mgkg_GSE6511"    ,
-  "CLZ_hindbrain_B6_GSE33822" = "CLZ_hindbrain_B6_GSE33822",
-  "CLZ_forebrain_B6_GSE33822" = "CLZ_forebrain_B6_GSE33822",
-  "CLZ_wholebrain_B6_GSE33822" = "CLZ_wholebrain_B6_GSE33822",
-  "LOX_110256" = "LOX_110256", "ZIP_110256" = "ZIP_110256", "LOX_119290" = "LOX_119290", "CLZ_93918" = "CLZ_93918", 
-  "OLA-52615-cerebellum" = "OLA-52615-cerebellum" ,     "CLO 25mgkg (Iwata 2006)" ="CLO 25mgkg (Iwata 2006)",       
-  "OLA 1.25mgkg (Iwata 2006)" ="OLA 1.25mgkg (Iwata 2006)", "QUE 18.75mgkg (Iwata 2006)" = "QUE 18.75mgkg (Iwata 2006)" ,   "THI 25 mgkg (Iwata 2006)" = "THI 25 mgkg (Iwata 2006)" ,    
-  "CLO_0.1uM_6hr (Readhead 2018)" = "CLO_0.1uM_6hr (Readhead 2018)",  "CLO_0.03uM_6hr (Readhead 2018)" = "CLO_0.03uM_6hr (Readhead 2018)" ,"HAL_0.1uM_6hr (Readhead 2018)" = "HAL_0.1uM_6hr (Readhead 2018)" ,
-  "Lox_1uM_6hr (Readhead 2018)" = "Lox_1uM_6hr (Readhead 2018)"  , "ARI-1uM-6h (Readhead 2018)" = "ARI-1uM-6h (Readhead 2018)"  ,   "QUE-10uM-6h (Readhead 2018)" = "QUE-10uM-6h (Readhead 2018)",   
-  "QUE-0.03uM-6h (Readhead 2018)" = "QUE-0.03uM-6h (Readhead 2018)",  "RIS-0.03uM-6h (Readhead 2018)" = "RIS-0.03uM-6h (Readhead 2018)" , "ZIP-0.1uM-6h (Readhead 2018)" = "ZIP-0.1uM-6h (Readhead 2018)" , 
-  "ZIP-0.03uM-6h (Readhead 2018)"= "ZIP-0.03uM-6h (Readhead 2018)" 
-  
-)
-
-
-InsulinListFullDop <- list(
-  "HFD_18wks (Anand, 2017)" ,       "HFD_15wks (Anand, 2017)" ,     
-  "HFD_6day (Anand, 2017)"    ,    "HFD_10day (Anand, 2017)"  ,      
-  "HFD_14day (Anand, 2017)"    ,     "HFD_3wks (Anand, 2017)"  ,       
-  "HFD_6wks (Anand, 2017)"      ,    "HFD_9wks (Anand, 2017)"   ,      
-  "HFD_12wks (Anand, 2017)"     ,    "CB1R (Bilkei et al.,2017)_2mon" ,
-  "CB1R (Bilkei et al.,2017)_12mon", "NOS (Boone et al., 2017)"       ,
-  "PI3K-LY29 (Chung et al., 2010)" , "MEK-U0126 (Chung et al., 2010)" ,
-  "PI3K (Claeys et al., 2019)"     , "AICAR-Hippo-14day"              ,
-  "AICAR-Hippo-7day"                ,"AICAR-Cortex-14day"             ,
-  "AICAR-Cortex-7day"               ,"CB1R (Juknat et al., 2013)"     ,
-  "HFD (Kruger 2012)"          ,     "MEK-U0126 (N.A.)"               ,
-  "NOS (N.A)"                   ,    "SHSY5Y_A_1day"                  ,
-  "SHSY5Y_A_2day"                ,   "SHSY5Y_A_3day"                  ,
-  "SHSY5Y_A_6hr"                   ,
-  "SHSY5Y_A_5day"                 ,  
-  "SHSY5Y_E_1day"                  , "SHSY5Y_E_2day"                  ,
-  "SHSY5Y_E_3day"            ,       "SHSY5Y_E_5day"                  ,
-  "SHSY5Y_E_6hr"              ,      "HFD_1wk (Sergi 2018)"           ,
-  "HFD_4wks (Sergi 2018)"      ,     "HFD_4wks (Vagena 2019)"         ,
-  "HFD_8wks (Vagena 2019)", "GSE116813_THC", "GSE50873_AICAR_14D", "GSE50873_AICAR_7D",
-  "GSE50873_AICAR_3D", "GSE100349_HFD", "GSE104709_HFD"
-)
-
-MCListFull <- list("GSE12214_1000ug-L", "GSE12214_100ug-L", "GSE29861_24hr_10uM", "GSE29861_24hr_1uM", 
-                   "GSE29861_24hr_5uM", "GSE29861_4hr_100uM", "GSE29861_4hr_10uM", "GSE29861_4hr_50uM", 
-                   "GSE59495_0.5hr_100ug-kg", "GSE59495_0.5hr_10ug-kg", "GSE59495_0.5hr_1ug-kg", 
-                   "GSE59495_0.5hr_50ug-kg", "GSE59495_1hr_100ug-kg", "GSE59495_1hr_10ug-kg", 
-                   "GSE59495_1hr_1ug-kg", "GSE59495_1hr_50ug-kg", "GSE59495_3hr_100ug-kg", 
-                   "GSE59495_3hr_10ug-kg", "GSE59495_3hr_1ug-kg", "GSE59495_3hr_50ug-kg", 
-                   "GSE59495_6hr_100ug-kg", "GSE59495_6hr_10ug-kg", "GSE59495_6hr_1ug-kg", 
-                   "GSE59495_6hr_50ug-kg", "GSE59906_0.67days", "GSE59906_1day")
-
-AgingListFull <- list("Aging_Mice_Hippocampus_PR",
-                      "Aging_Mice_Cerebellum_PR",
-                      "Aging_Mice_Cortex_PR")
-
-CVListFull <- list(
-                   "GSE45042_MOCKvsEMC_24h",
-                   "GSE56192_CTLvsMERS_24h",
-                   "GSE56192_CTLvsSARS_24h",
-                   "GSE3326_MOCKvsSARS_36h"
-                   )
-
-
-AntidepressantsListFullDop <- list()
-
-ADListFullDop <- list()
-
-AddedListFullDop <- list()
-
-AddedListFullDop_sc <- list()
-
-
-
-BACellTypesList <- list(
-  "Astro", "Endo", "Exc", "Inh", "Micro", "OPC", "Oligo"
-)
-
-# L1000 Genes List ----
-
-L1000Genes <- c('AARS','ABCF1','ABL1','ACAA1','ACAT2','ACLY','ADAM10','ADH5','PARP1','ADRB2','AGL','AKT1','ALAS1','ALDOA','ALDOC','SLC25A4','ANXA7','APBB2','BIRC2','BIRC5','APOE','APP','FAS','RHOA','ARHGAP1','ASAH1','ATF1','ATP1B1','ALDH7A1','ATP6V0B','BAD','BAX','CCND1','BCL2','BDH1','BID','BLMH','BLVRA','BMP4','BNIP3','BNIP3L','BPHL','BRCA1','BTK','BUB1B','C5','DDR1','CALM3','CALU','CAPN1','CAST','CASP2','CASP3','CASP7','CASP10','CAT','CBLB','CBR1','CBR3','CCNA2','CCNB1','CCND3','CCNF','CCNH','SCARB1','CD40','CD44','CD58','ADGRE5','CDK1','CDC20','CDC25A','CDC25B','CDC42','CDH3','CDK2','CDK4','CDK6','CDK7','CDKN1A','CDKN1B','CDKN2A','CEBPA','CEBPD','CENPE','CETN3','CHEK1','CHN1','CIRBP','CLTB','CLTC','COL1A1','COL4A1','CREB1','CRK','CRKL','CRYZ','CSK','CSNK1A1','CSNK1E','CSNK2A2','CSRP1','CTNND1','CTSD','CTSL','CYB561','DAG1','DAXX','DCK','DCTD','DDB2','GADD45A','DDX10','DECR1','DFFA','DFFB','DLD','DNM1','DNMT1','DNMT3A','DPH2','DSG2','TSC22D3','DUSP3','DUSP4','DUSP6','TOR1A','E2F2','ECH1','EDN1','EGF','EGFR','EGR1','EIF4EBP1','EIF4G1','EIF5','ELAVL1','CTTN','EPB41L2','EPHA3','EPHB2','EPRS','NR2F6','ERBB2','ERBB3','ETFB','ETS1','ETV1','EXT1','EZH2','FAH','PTK2B','FAT1','FDFT1','FGFR2','FGFR4','FHL2','FKBP4','FOXO3','FOS','FPGS','FUT1','FYN','SLC37A4','GAA','GABPB1','GALE','GAPDH','GATA2','GATA3','GFPT1','GHR','GLI2','GLRX','GNA11','GNA15','GNAI1','GNAI2','GNAS','SFN','GPC1','GPER1','GRB7','GRB10','GRN','NR3C1','CXCL2','GSTM2','GSTZ1','MSH6','GTF2A2','GTF2E2','HSD17B10','HADH','HDAC2','HIF1A','HK1','HLA-DMA','HLA-DRA','HMGCR','HMGCS1','HMOX1','HOXA5','HOXA10','HPRT1','HES1','DNAJB2','HSPA1A','HSPA4'
-                ,'HSPA8','HSPB1','HSPD1','DNAJB1','ICAM1','ICAM3','ID2','IDE','IFNAR1','IGF1R','IGF2R','IGFBP3','IGHMBP2','IKBKB','IL1B','IL4R','IL13RA1','ILK','INPP1','INSIG1','ITGAE','ITGB5','JUN','KCNK1','KIF5C','KIT','KTN1','LAMA3','STMN1','LBR','LGALS8','LIG1','LIPA','LOXL1','LRPAP1','LYN','SMAD3','MAN2B1','MAT2A','MBNL1','MCM3','ME2','MEF2C','MAP3K4','MEST','MIF','FOXO4','MMP1','MMP2','MNAT1','MSRA','MUC1','MYBL2','MYC','GADD45B','MYLK','MYO10','NCK1','NFATC3','NFATC4','NFE2L2','NFIL3','NFKB2','NFKBIA','NFKBIB','NFKBIE','NIT1','NMT1','NOS3','CNOT4','NOTCH1','PNP','NPC1','SLC11A2','NRAS','NUCB2','NUP88','NVL','ORC1','OXA1L','OXCT1','PAFAH1B1','PAFAH1B3','SERPINE1','PAK1','PCBD1','PCCB','PCK2','PCM1','PCMT1','PCNA','PDGFA','PFKL','PGAM1','PGM1','PHKA1','PHKB','PHKG2','PIK3C2B','PIK3C3','PIK3CA','PIN1','PLA2G4A','PLCB3','PLK1','PLP2','PLS1','PLSCR1','PMAIP1','PMM2','POLB','POLE2','POLR2I','POLR2K','PPARD','PPARG','PPIC','PPOX','PPP2R5A','PPP2R5E','PRCP','PRKACA','PRKCD','PRKCH','PRKCQ','MAPK9','MAPK13','MAP2K5','PRKX','PROS1','LGMN','HTRA1','PSMB8','PSMB10','PSMD2','PSMD4','PSMD9','PSMD10','PSME1','PSME2','PTGS2','PTK2','PTPN1','PTPN6','PTPN12','PTPRC','PTPRF','PTPRK','PXMP2','PXN','PYCR1','PYGL','RAB4A','RAB27A','RAC2','RAD9A','RAD51C','MOK','RALA','RALB','RALGDS','RAP1GAP','RASA1','RB1','KDM5A','RELB','RFC2','RFC5','RFNG','RFX5','RGS2','RHEB','RNH1','RPA1','RPA2','RPA3','MRPL12','RPN1','RPS5','RPS6','RPS6KA1','RSU1','RTN2','S100A4','S100A13','SATB1','SCP2','CCL2','SDHB','SGCB','SHB'
-                ,'SHC1','SKIV2L','SKP1','SLC1A4','SMARCA4','SMARCC1','SMARCD2','SNAP25','SNCA','SOX2','SOX4','SPAG4','SPP1','SPR','SPTAN1','SRC','STAT1','STAT3','STAT5B','AURKA','STK10','STX1A','STX4','STXBP1','STXBP2','SUPV3L1','SUV39H1','SYK','SYPL1','TARBP1','TBP','TBX2','TBXA2R','TCEA2','VPS72','TCTA','DYNLT3','TERT','TESK1','TFAP2A','TFDP1','TGFB3','TGFBR2','TIAM1','TIMP2','TJP1','TLE1','TLR4','TSPAN6','TSPAN4','TOP2A','TP53','TP53BP1','TP53BP2','TPD52L2','TPM1','TSTA3','TXNRD1','UBE2A','UGDH','NR1H2','USP1','VDAC1','WFS1','WRB','XBP1','XPNPEP1','ZFP36','ZNF131','ZMYM2','PAX8','CXCR4','IFRD2','MAPKAPK3','USP7','REEP5','ST7','KAT6A','PDHX','FOSL1','HMGA2','NCOA3','NRIP1','SMC1A','LAGE3','AXIN1','CDC45','FZD1','FZD7','HIST2H2BE','PIP4K2B','NCK2','DYRK3','DUSP11','RAE1','PIK3R3','NIPSNAP1','IKBKAP','HAT1','MAPKAPK5','BHLHE40','MKNK1','CASK','AKR7A2','RUVBL1','PSMG1','BECN1','MBTPS1','EED','CTNNAL1','RNMT','PEX11A','CREG1','INPP4B','IQGAP1','SOCS2','CFLAR','CDK5R1','ST3GAL5','IER3','SQSTM1','SLC5A6','CPNE3','CCNA1','TIMELESS','P4HA2','PLOD3','NOL3','SLC25A14','MPZL1','MAP7','DNAJA3','USP14','MTA1','PDLIM1','SMC3','PRPF4','CCNB2','CCNE2','SYNGR3','LPAR2','ARHGEF2','ZW10','AURKB','VAPB','NOLC1','UBE2L6','MAPKAPK2','CYTH1','ITGB1BP1','BCL7B','COPB2','ADGRG1','TM9SF2','MAP4K4','HOMER2','SH3BP5','PIGB','PSMF1','SPTLC2','TBPL1','BAG3','POLR1C','SPAG7','FEZ2','IKBKE','MTFR1','HS2ST1','IPO13','VGLL4','NUP93','UBE3C','EDEM1','TRAM2','CEP57','KIAA0100','HERPUD1','KIAA0355','USP6NL','CCP110','MLEC','TATDN2','MRPL19','SCRN1','EFCAB14','KEAP1','MELK','PLEKHM1','C2CD5','KIAA0753','C2CD2L','TOMM70A','KIAA0196','KLHL21','ARNT2'
-                ,'FAM20B','NCAPD2','PAN2','LPGAT1','KIF14','OXSR1','MVP','DMTF1','GNPDA1','HDAC6','PARP2','MAMLD1','DNAJB6','SMC4','ABCC5','ABCB6','DNM1L','TSPAN3','KIF20A','ARL4C','TRAP1','G3BP1','MBNL2','CEBPZ','SLC25A13','SORBS3','RBM6','TXNDC9','TRIM13','TRIB1','MFSD10','SLC35B1','TIMM17B','AKAP8','STUB1','NET1','SMNDC1','PAK4','TNIP1','IKZF1','TMEM5','HMG20B','MYL9','LYPLA1','PPIE','VAV3','LRRC41','CRTAP','VAT1','STK25','APPBP2','CHERP','HYOU1','RPP38','SLC35A1','DRAP1','PAICS','ST6GALNAC2','STAMBP','NPRL2','IGF2BP2','YKT6','CGRRF1','RRAGA','GNB5','EBP','CNPY3','YME1L1','TCFL5','KDM5B','POP4','ARPP19','ZNF274','MTHFD2','WASF3','UTP14A','FRS2','CLPX','PGRMC1','MALT1','CPSF4','BLCAP','TCERG1','RNPS1','TOMM34','PDIA5','MLLT11','EBNA1BP2','TMED10','ASCC3','SLC27A3','KIF2C','CCDC85B','TLK2','KDELR2','RAB31','B4GAT1','PAPD7','UBE2C','DUSP14','TOPBP1','PRSS23','PWP1','PKIG','CORO1A','LSM6','PSIP1','SLC2A6','NISCH','CHEK2','PRAF2','POLG2','CHP1','PNKP','ECD','DDX42','TWF2','CASC3','COG2','ATF5','MTF2','PUF60','RAB11FIP2','CLSTN1','FOXJ3','KIAA0907','EPN2','SACM1L','ATF6','RPIA','RAB21','SPEN','FBXO21','RBM34','WDTC1','XPO7','TBC1D9B','RRP1B','MYCBP2','CDK19','GPATCH8','MAST2','DCUN1D4','FCHO1','SNX13','ATP11B','JMJD6','RRS1','RRP12','SYNE2','PDS5A','CAMSAP2','ATMIN','TRIM2','KIAA1033','USP22','WDR7','JADE2','ARHGEF12','PPP1R13B','RRP8','NUDCD3','SIRT3','SLC35A3','ICMT','MACF1','SUZ12','KAT6B','NNT','ADAT1','TMEM50A','KLHDC2','ACOT9','SSBP2','NUP62','ARFIP2','LSM5','PLA2G15','TMEM2','ZNF318','FBXO7','SPDEF','BAMBI','BACE2','COG4','MPC2','CLIC4','C2CD2','TIPARP','TSKU','RNF167','LRP10','ZNF451','SENP6','RAI14','KIF1BP'
-                ,'TES','PHGDH','MYCBP','CHIC2','TIMM9','AKAP8L','ATP2C1','TRAPPC3','ATP5S','TNFRSF21','SESN1','HTATSF1','TMEM97','BZW2','CHMP4A','GTPBP8','DNAJC15','PACSIN3','RBM15B','HOOK2','SNX11','TIMM22','NENF','UBQLN2','ERO1L','DNTTIP2','PIK3R4','HDGFRP3','COPS7A','NSDHL','HEBP1','MTERF3','AMDHD2','ISOC1','MRPS16','FIS1','GOLT1B','GLOD4','GMNN','LAP3','NOSIP','DERA','SCCPDH','MRPS2','VPS28','HSD17B11','NUSAP1','SCAND1','CD320','NGRN','SNX7','ATP6V1D','ZNF589','PRKAG2','UBE2J1','EVL','HACD3','UFM1','LSR','DHRS7','CAB39','ARID4B','NUDT9','CYCS','TERF2IP','GFOD1','KCTD5','TMCO1','DHX29','EXOSC4','DDIT4','PAF1','P4HTM','SLC35F2','ZNF586','FBXL12','TEX10','YTHDF1','TXNL4B','HERC6','PIH1D1','PPP2R3C','FKBP14','CDCA4','PLEKHJ1','HEATR1','ANO10','UBR7','FAIM','ADI1','ABCF3','ENOSF1','LRRC16A','ANKRD10','STAP2','IARS2','NUP133','CNDP2','FAM63A','KDM3A','PECR','EAPP','CISD1','ZNF395','KLHL9','NPDC1','TM9SF3','PAK6','DUSP22','ADCK3','CIAPIN1','PLSCR3','SCYL3','LYRM1','ZMIZ1','MCOLN1','THAP11','ABHD6','TRIB3','POLD4','SQRDL','ENOPH1','PRUNE','SNX6','FASTKD5','ELAC2','ABHD4','MCUR1','RBKS','ATG3','NARFL','ZDHHC6','ACBD3','CERK','NT5DC2','ACD','INTS3','TRAK2','METRN','ELOVL6','TMEM109','CCDC86','TRAPPC6A','CHAC1','MBOAT7','PRR15L','CRELD2','FSD1','TCTN1','CHMP6','NPEPL1','FAM57A','NUP85','TCEAL4','DHDDS','DENND2D','FBXO11','CCDC92','COASY','WDR61','TSEN2','PRR7','ITFG1','GDPD5','GRWD1','ARID5B','TUBB6','PSRC1','ADO','HIST1H2BK','MICALL1','UBE3B','HN1L','SLC25A46','COG7','MAPK1IP1L','TBC1D31','H2AFV','RPL39L','CANT1','WIPF2','TICAM1','TXLNA','SPRED2','EML3','TMEM110
-                ','FAM69A')
 
 # UI ---- 
 ui <- 
@@ -458,8 +50,8 @@ ui <-
     
     # Tabs Headers ----
     dashboardHeader(title = "Kaleidoscope", 
-                    shiny::tags$li(a(href='https://www.cdrl-ut.com/', target="_blank",
-                                     img(src = 'logo.jpg',
+                    shiny::tags$li(a(href='https://www.utoledo.edu/med/depts/neurosciences/', target="_blank",
+                                     img(src = 'ks_new_logo.png',
                                          title = "Logo", height = "50px"),
                                      style = "padding-top:0px; padding-bottom:0px; padding-right:0px; padding-left:0px;"), class = "dropdown"))
     ,
@@ -585,18 +177,9 @@ ui <-
                       tags$hr(),
                       
                       actionButton("act", "Get Results!"), tags$hr(),
-                      
-                      # radioButtons("ThresChoice", label = "Criteria:", 
-                      #              choices = list("Log2 FC" = "Log2FC", "ECDF" = "ecdf")),
-                      # 
-                      #sliderInput("CommThres", "Log2FC Threshold:", min = 0, max = 2, step = 0.1, value = 1),
-                      #sliderInput("CommThres2", "ECDF Threshold:", min = 0, max = 1, step = 0.01, value = 0.95),
                       sliderInput("CommTop", "Top hits per dataset:", min = 100, max = 3000, step = 100, value = 1000),
                       sliderInput("CommTop2", "Top Overlaping hits:", min = 100, max = 1000, step = 10, value = 100),
                       switchInput(inputId = "showtable",size = "mini", label = "Display table?", value = T),
-                      #fileInput("DSinput", "Upload a dataset:", accept = c(".RDS")),
-                      #textInput("DSNameInput", "Name your dataset:"),
-                      #actionButton("DSupload", "Upload"),
                       htmlOutput("err2"),
                       verbatimTextOutput("targetMissing")
                     ),
@@ -606,17 +189,10 @@ ui <-
                         tabsetPanel( id = "LUResults", 
                                      tabPanel("Results", 
                                               reactableOutput("t1"),
-                                              #gt_output(outputId = "t1"),
                                               tags$hr(),
-                                              # box(
-                                              #   title = "Lookup Table", width = NULL, status = "primary",
-                                              #   div(style = 'overflow-x: scroll', shiny::tableOutput('t1'))
-                                              # ),
                                               verbatimTextOutput("targetListed"),
                                               actionButton("enrichrBtn2", "Enrichr", icon = icon("dna")),
-                                              #actionButton("iLINCSBtn1", "iLINCS", icon = icon("dna")),
                                               downloadButton("iLINCS", "Download iLINCS sig"),
-                                              #EnrichrBtn("enrichrBtn2"),
                                               downloadButton("down_1", "Download LookUp table"),
                                               tags$hr(),
                                               gt_output(outputId = "overlapTable"),
@@ -626,12 +202,10 @@ ui <-
                                               box("Up", width = 12,
                                                   verbatimTextOutput("classifyGenesUp"),
                                                   actionButton("enrichrBtn3", "Enrichr", icon = icon("dna")),
-                                                  #EnrichrBtn("enrichrBtn3"),
                                               ),
                                               box("Down", width = 12,
                                                   verbatimTextOutput("classifyGenesDown"),
                                                   actionButton("enrichrBtn4", "Enrichr", icon = icon("dna")),
-                                                  #EnrichrBtn("enrichrBtn4"),
                                               ),
                                      ),
                                      tabPanel("Lookup Graph", 
@@ -643,7 +217,6 @@ ui <-
                                      tabPanel("Heatmap", plotOutput("HM2", height = "700px"),
                                               
                                               fluidRow(
-                                                #box("Figure Adjustments", status = "primary",
                                                 column(6,
                                                        radioButtons("HM_Par1", label = "Value:", 
                                                                     choices = list("Log2FC","FC","ECDF")),
@@ -654,9 +227,39 @@ ui <-
                                                        sliderInput("heatmap2SizeCol", "col labels size:", min = 1, max = 10, value = 5, step = 0.5),
                                                        switchInput(inputId = "HM_Par2",size = "mini", label = "Groups", value = F),
                                                 )
-                                                #)
                                               ),
                                               downloadButton("HM2_down", "Download")
+                                     ),
+                                     
+                                     tabPanel("Pathways", 
+                                              pickerInput(inputId="go_pathways",label="Select GO Pathway: ",choices=go_ids_df_2$name, 
+                                                          options = list(`actions-box` = TRUE, `live-search`=TRUE),
+                                                          multiple = FALSE),
+                                              pickerInput(inputId="lookup_pathway_ref",label="Reference Dataset",choices="", 
+                                                          options = list(`actions-box` = TRUE),
+                                                          multiple = FALSE),
+                                              tabsetPanel(
+                                                tabPanel("FC Graph",
+                                                         plotOutput("lookup_path_fig", height = "700px"),
+                                                         sliderInput("lookup_path_fig_textsize", label = "text size", min = 1, max = 15, value = 7),
+                                                         textOutput("lookup_path_lims"),
+                                                         sliderInput("lookup_pathway_fig_lims", label = "y axix limits", min = 0.1, max = 15, value = 1, step = 0.1),
+                                                         switchInput(inputId = "lookup_path_fig_violin",size = "mini", label = "violin", value = T),
+                                                         downloadButton("pathway_down", "Download")
+                                                         ),
+                                                tabPanel("GSEA Graph",
+                                                         plotOutput("lookup_gsea_path_fig", height = "700px"),
+                                                         sliderInput("lookup_gsea_pathway_fig_lims", label = "adj p cutoff", min = 0, max = 1, value = 0.25, step = 0.05),
+                                                         switchInput(inputId = "lookup_gsea_path_fig_p",size = "mini", label = "padj", value = F),
+                                                         downloadButton("pathway_down_2", "Download")
+                                                ),
+                                                tabPanel("GSEA Table",
+                                                         reactableOutput("lookup_gsea_path_tbl"),
+                                                         downloadButton("pathway_down_3", "Download")
+                                                )
+                                                
+                                              )
+                                              
                                      ),
                                     
                                      tabPanel("Overlapping HM", plotOutput("HM5", height = "700px"),
@@ -664,8 +267,6 @@ ui <-
                                               sliderInput("heatmap5SizeCol", "col labels size:", min = 1, max = 10, value = 2)
                                      ),
                                      tabPanel("Correlation", 
-                                              #radioButtons("corGenes", label = "Genes selected:", 
-                                              #             choices = list("From list" = "fromList", "Use Full Signatures" = "fullSig")),
                                               plotOutput("CorPlot", height = "700px")),
                                      tabPanel("References", 
                                               DT::dataTableOutput("DatabasesFullInfo")
@@ -736,47 +337,6 @@ ui <-
                 )
                 
         ),
-        # Datasets Overview UI Tab ----
-        # tabItem("DsInfo",
-        #         
-        #         fluidPage(
-        #           sidebarLayout(
-        #             sidebarPanel(radioButtons("DsSelect", "Select Dataset:", 
-        #                                       choices = list(
-        #                                         "Stanley Database" = "Stanley",
-        #                                         "Mt.Sinai ACC" = "MtSinaiACC",
-        #                                         "Mt.Sinai DLPFC" = "MtSinaiDLPFC",
-        #                                         "Mt.Sinai TPA" = "MtSinaiTPA",
-        #                                         "Mt.Sinai MTA" = "MtSinaiMTA",
-        #                                         "Gandal Microarray" = "gandalMicro",
-        #                                         "Gandal RNAseq" = "gandalRNAseq",
-        #                                         "DISC1 RNAseq" = "DISC1_RNA",
-        #                                         "DISC1 Proteomics" = "DISC1_Prot",
-        #                                         "Super", "Deep", 
-        #                                         "hiPSC_Neuron", 
-        #                                         "hiPSC_NPC1",
-        #                                         "Blood mRNA" = "BloodmRNA"
-        #                                         
-        #                                         
-        #                                       ), 
-        #                                       selected = "MtSinaiMTA"),
-        #                          
-        #                          sliderInput("DSslider2", label = h3("Threshold"), min = 0, 
-        #                                      max = 10, value = 1.5, step = 0.1),
-        #                          sliderInput("DSslider3", label = h3("Label"), min = 1, 
-        #                                      max = 10, value = 5, step = 0.1)
-        #                          
-        #             ),
-        #             mainPanel(plotOutput("DsGraph"),
-        #                       tags$hr(),
-        #                       verbatimTextOutput("DSoutput"),
-        #                       shiny::dataTableOutput("DStable") 
-        #                       
-        #             )
-        #           )
-        #           
-        #         )
-        # ),
         # Braincloud UI Tab ----
         tabItem("brainCloud", 
                 fluidPage(
@@ -822,8 +382,6 @@ ui <-
                   
                   textInput("brainAtlasText", "Single Cell Transcriptional Profiling (Human, Middle Temporal Gyrus (MTG))",
                             placeholder = "", value = ""),
-                  #switchInput(inputId = "brainAtlasPar1",size = "mini", label = "Scale By Row", value = F),
-                  #switchInput(inputId = "brainCloudPar2",size = "mini", label = "SE", value = T),
                   htmlOutput("errBA"),
                   actionButton("brainAtlasButton", "Get Results"),
                   tags$hr(),
@@ -856,7 +414,7 @@ ui <-
         # GTEx UI Tab ----
         tabItem("GTEx", 
                 fluidPage(
-                  textInput("GTExText1", "",
+                  textInput("GTExText1", "Check tissue-specific gene expression",
                             placeholder = "", value = ""),
                   actionButton("GTExButton1", "Get Results"),
                   tags$hr(),
@@ -881,7 +439,7 @@ ui <-
                 )
                 
         ),
-        # Barres UI Tab ----
+        # BrainRNASeq UI Tab ----
         tabItem("barresDB2", 
                 fluidPage(
                   textInput("checkEx", "Check Gene Expression Levels in the Brain (Mouse & Human)"),
@@ -890,7 +448,9 @@ ui <-
                   switchInput(inputId = "barresPar2",size = "mini", label = "Color", value = F),
                   tags$hr(),
                   plotOutput("barredMouseplot"),tags$hr(),
-                  plotOutput("barredHumanplot")
+                  plotOutput("barredHumanplot"),
+                  downloadButton("brainrnaseq_table_om", label = "Mice Table"),
+                  downloadButton("brainrnaseq_table_oh", label = "Human Table")
                 )
         ),
         
@@ -906,7 +466,8 @@ ui <-
                                         tags$hr(),
                                         plotOutput("barredAllplot3", height = "600px"),
                                         tags$hr(),
-                                        plotOutput("barredAllplot4", height = "600px")
+                                        plotOutput("barredAllplot4", height = "600px"),
+                                        downloadButton("brainrnaseq_table_mm", label = "Mice Table")
                                         
                                ),
                                tabPanel("Human", 
@@ -914,7 +475,8 @@ ui <-
                                         tags$hr(),
                                         plotOutput("barredAllplot6", height = "600px"),
                                         tags$hr(),
-                                        plotOutput("barredAllplot7", height = "600px")
+                                        plotOutput("barredAllplot7", height = "600px"),
+                                        downloadButton("brainrnaseq_table_mh", label = "Human Table")
                                         
                                )
                                
@@ -930,9 +492,6 @@ ui <-
         # Uploading ds UI -----
         tabItem("uploadTab", 
                 fluidPage(
-                  #useShinyjs(),
-                  #useShinyalert(),
-                  # Application title
                   titlePanel("Upload Datasets into Kaleidoscope"),
                   
                   # Sidebar with a slider input for number of bins 
@@ -965,22 +524,6 @@ ui <-
         )
         
         
-        ##### BrainSpan UI Tab ----
-        # tabItem("brainSpanTab",
-        #         fluidPage(
-        #           
-        #           textInput("brainSpanText", "Check Gene(s) Expression Levels in the Brain Regions", placeholder = "", value = ""),
-        #           htmlOutput("errBS"),
-        #           pickerInput(inputId="brainSpanRegions",label="Select Regions:",choices=BSRegions, options = list(`actions-box` = TRUE),
-        #                       multiple = TRUE),
-        #           switchInput(inputId = "brainSpanPar1",size = "mini", label = "Points", value = T),
-        #           switchInput(inputId = "brainSpanPar2",size = "mini", label = "SE", value = T),
-        #           actionButton("brainSpanButton", "Plot"),
-        #           plotOutput("brainSpanPlot", height = "750px")
-        #         )
-        #         
-        # )
-        
       )
       
     )
@@ -990,6 +533,10 @@ ui <-
 # Server ----
 server <- function(input, output, session) {
   session$onSessionEnded(stopApp)
+  
+  go_pathway_values <- reactiveValues()
+  
+  
   
   output$SoftInfo <- renderText("
 Contact info: khaled.alganem@rockets.utoledo.edu
@@ -1059,28 +606,11 @@ A curated collection of all published genome-wide association studies that curre
 genetic variant - phenotype associations
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
   
-  # Load Data Files ----
-  withProgress(message = 'Cenncting to db ...', value = 4, {
-  my_db <- dbPool(
-    RMySQL::MySQL(), 
-    dbname = "ksdatabase",
-    host = "cdrlshinyapps.cdkkdi6q6ptl.us-east-2.rds.amazonaws.com",
-    username = "cdrl",
-    password = "cdrl_ks"
-  )
-  })
-  
-  onStop(function() {
-    poolClose(my_db)
-  })
-  
-  
-  
+
   
   tbl(my_db, "lookup_userdefined_meta") %>% 
     collect() -> us_def_ds
   
-    #as.list() -> AddedListFullDop
   updatePickerInput(session, 'dbs10', choices = us_def_ds %>% 
                       filter(Group == "ATD") %>% pull(DataSet) %>% as.list())
   
@@ -1093,8 +623,6 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
   updatePickerInput(session, 'dbs4', choices = us_def_ds %>% 
                       filter(Group == "AP") %>% pull(DataSet) %>% as.list() %>% c(AntipsychoticsListFullDop, .))
   
-  #updatePickerInput(session, 'dbs_added', choices = AddedListFullDop)
-  #AddedListFullDop <<- list(input$DSNameInput)
   updatePickerInput(session, 'dbs_added', choices = us_def_ds %>% 
                       filter(!Group %in% c("ATD", "AD", "MDD", "AP")) %>% pull(DataSet) %>% as.list())
   
@@ -1105,9 +633,6 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
       if(!exists("fullDataSet")) {
         withProgress(message = 'Loading lookup data ...', value = 0, {
           incProgress(2/10)
-          
-          #fullDataSet <<- readRDS("fullDataSet_Feb17_2020.rds")
-          incProgress(7/10)
           fullDBsInfo <<- read.csv("./data/SCZ_Datasets_Info.csv", header = T, stringsAsFactors = F)
           incProgress(10/10)
         })
@@ -1116,21 +641,13 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
   })
   
   observe({
-    
-    
     if(input$tabsList == "GTEx") {
-      
       if(!exists("GTExQTLData")) {
         withProgress(message = 'Loading GTEx data ...', value = 0, {
           incProgress(1/10)
-          #GTExQTLData <<- readRDS("GTExQTLDataTidy_6Regions.rds")
           GTExColoredGrouped <<- readRDS("./data/GTExColoredGrouped.rds")
           names(GTExColoredGrouped) <- "Tissue"
           incProgress(5/10)
-          # GTExGeneExpMedian <<- read.delim("GTEx_Analysis_2016-01-15_v7_RNASeQCv1.1.8_gene_median_tpm.gct", 
-          #                                  sep = "\t", na.strings = "", skip = 2, stringsAsFactors = F)
-          # GTExSampleAtr2 <<- readRDS("GTExSampleAtrrHM.rds")
-          # GTExSampleAtr2 %>% rename(Tissue = SMTS) ->> GTExSampleAtr2
           incProgress(10/10)
         })
       }
@@ -1139,49 +656,19 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
     if(input$tabsList == "brainAtlas") {
       if(!exists("brainAtlasInfo")) {
         withProgress(message = 'Loading BrainAtlas data ...', value = 0.2, {
-          
           #brainAtlasInfo <<- readRDS("CompleteGroupedByCLuster.rds")
           brainAtlasGrouping <<- readRDS("./data/clusterHeatmapGrouping.rds")
           incProgress(1)
         })
       }
     }
-    
-    if(input$tabsList == "GWAS") {
-      if(!exists("GWASInfo")) {
-        withProgress(message = 'Loading GWAS data ...', value = 0.2, {
-          #GWASInfo <<- readRDS("GWAS_asso.rds")
-          incProgress(1)
-        })
-      }
-    }
-    
-    if(input$tabsList == "brainCloud") {
-      if(!exists("brainCloudInfo")) {
-        withProgress(message = 'Loading BrainCloud data ...', value = 0.2, {
-          #brainCloudInfo <<- readRDS("Braincloud_Fixed_Final.rds")
-          incProgress(1)
-        })
-      }
-    }
-    
-    if(input$tabsList == "barresDB2" | input$tabsList == "barresDB3") {
-      if(!exists("barresMouse")) {
-        withProgress(message = 'Loading Brain RNA-Seq data ...', value = 0.2, {
-          #barresMouse <<- readRDS("BarresBrainSeqMouse.rds")
-          #barresHuman <<- readRDS("HumanBarres.rds")
-          incProgress(1)
-        })
-      }
-    }
+
     
     
     
   })
   
   # STRING Server Tab ----
-  
-  
   KJHB <- c()
   observeEvent(input$slider1, {
     updateNumericInput(session, "scoreInp", value = input$slider1)
@@ -1206,7 +693,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
       s <- input$slider1
       s2 <- input$slider2
       
-      url <- paste0("http://string-db.org/api/image/network?identifier=", strGene, "&required_score=",s,"&limit=",s2,"&species=9606&network_flavor=evidence")
+      url <- paste0("http://version-11-0.string-db.org/api/image/network?identifier=", strGene, "&required_score=",s,"&limit=",s2,"&species=9606&network_flavor=evidence")
       t <- GET(url)
       
       if (t$status_code < 300) {
@@ -1217,7 +704,8 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
           rasterImage(t,0,0,1,1)
         })
 
-        urlString <- paste0("http://string-db.org/api/json/interaction_partners?identifiers=",strGene,"&species=9606&required_score=",s,"&limit=",s2)
+        urlString <- paste0("http://version-11-0.string-db.org/api/json/interaction_partners?identifiers=",strGene,"&species=9606&required_score=",s,"&limit=",s2)
+        #urlString22 <- paste0("http://version-11-0.string-db.org/api/json/interaction_partners?identifiers=",strGene,"&species=9606&required_score=",s,"&limit=",s2)
         incProgress(0.3)
         fromJSON(content(GET(urlString))) -> tableString2
         select(bind_rows(lapply(tableString2, data.frame, stringsAsFactors = FALSE)), everything()) -> tableString2
@@ -1227,7 +715,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
           rename(preferredName = preferredName_B) -> tableString2
         
         incProgress(0.7)
-        urlString <- paste0("http://string-db.org/api/json/resolve?identifiers=",paste(IdList,collapse ="%0D"),"&species=9606")
+        urlString <- paste0("http://version-11-0.string-db.org/api/json/resolve?identifiers=",paste(IdList,collapse ="%0D"),"&species=9606")
         tableString1 <- fromJSON(content(GET(urlString)))
         select(bind_rows(lapply(tableString1, data.frame, stringsAsFactors = FALSE)), preferredName, annotation) -> tableString1
         
@@ -1246,10 +734,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
         align = "c", spacing = "m", bordered = T,
         striped = T, hover = T)
         
-        
-        
         output$intctos = renderText(paste(pull(tableString1, preferredName), collapse = ","))
-        
         enrichrLink <- getEnrichrLink(paste(pull(tableString1, preferredName), collapse = "\n"))
         onclick("enrichrBtn1", runjs(paste0("window.open('",enrichrLink,"')")))
         
@@ -1264,9 +749,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
       
       else {
         error_msg <- "Target is not found in the STRING database"
-        
         output$err <- renderText({ paste("<font color=\"#FF0000\"><b>",error_msg) })
-        
         shinyjs::show("err")
         shinyjs::enable("getNet")
       }
@@ -1274,14 +757,12 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
     })
     
   })
+  
   observeEvent(input$trnsNet, {
-    
     updateTextInput(session, "gene", value = KJHB)
     updateTextInput(session, "iLINCSSearch", value = KJHB)
     updateTabItems(session, "tabsList" ,selected = "lookupTab")
-    
   })
-  
   
   # iLINCS Server Tab ----
   observeEvent(input$isearch, {
@@ -1324,8 +805,6 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
         
       }
       
-      iLINCStTest <<- iLINCSt2
-      
       output$iLINCST2 = DT::renderDataTable(DT::datatable({
         
         iLINCSt4 <- mutate(iLINCSt2,Link = paste0("<a href='http://www.ilincs.org/ilincs/signature/", SignatureID,"' target='_blank'>http://www.ilincs.org/ilincs/signature/", SignatureID,"</a>"))
@@ -1335,7 +814,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
         className = 'dt-center', targets = "_all")))
       ))
       iLINCSt2 %>% group_by(Gene) %>% count(name = "Knockdown Signatures") %>% 
-        arrange(desc(`Knockdown Signatures`)) ->> iLINCSt3
+        arrange(desc(`Knockdown Signatures`)) -> iLINCSt3
       
       output$iLINCST1 = DT::renderDataTable(
         DT::datatable({
@@ -1424,6 +903,12 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
       
       sel_all <- c(sel, sel_users, sel_users_sc)
       
+      
+      updatePickerInput(session, 'lookup_pathway_ref', choices = sel, selected = sel[1])
+      
+      
+      
+      
       # Seperator Options ---- 
       
       if (input$sepChoice == " ") {
@@ -1444,7 +929,6 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
       }
       
       if (input$inputChoice == "ownList") {
-        #shinyjs::enable(input$gene)
         genes <- genes[[1]] %>% map_chr(toupper)
         shinyjs::hide("down_2")
         shinyjs::hide("overlapTable")
@@ -1454,30 +938,10 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
       }
       
       else if (input$inputChoice == "l1000") {
-        #updateTextInput(session, "gene", value = KJHB)
-        #updateTextInput(session, "gene", value = L1000Genes)
         genes <- L1000Genes
       }
       
       else if (input$inputChoice == "CommHits") {
-        # tbl(my_db, "lookup") %>% mutate(Log2FCAbs = abs())
-        # fullDataSet$Log2FCAbs <- abs(fullDataSet$Log2FC)
-        # fullDataSet$Dir <- ifelse(fullDataSet$Log2FC>0,"Up", "Down")
-        
-        # data.table::setorder(setDT(filter(fullDataSet, DataSet %in% sel)), DataSet,-Log2FCAbs)[, indx := seq_len(.N), DataSet][indx <= input$CommTop] %>%  
-        #   select(Gene_Symbol, Group, Dir) %>% 
-        #   group_by(Gene_Symbol) %>% mutate(Hits = n()) %>%
-        #   group_by(Gene_Symbol,Group) %>% mutate(HitsPerGroup = n()) %>%
-        #   group_by(Gene_Symbol , Dir) %>% mutate(All = n()) %>% 
-        #   group_by(Gene_Symbol, Group , Dir) %>% 
-        #   mutate(byDir = n()) %>%  
-        #   distinct() %>%
-        #   pivot_wider(names_from = Dir, values_from = c(byDir, All)) %>%
-        #   rename(Down = byDir_Down, Up = byDir_Up) %>% 
-        #   pivot_wider(names_from = c(Group), values_from = c(HitsPerGroup,Down, Up), names_sep = ">") %>% 
-        #   rename(Up = All_Up, Down = All_Down) %>% 
-        #   arrange(desc(Hits)) %>% ungroup() %>% 
-        #   slice(1:input$CommTop2) -> commTable
         tbl(my_db, "lookup_new") %>% filter(DataSet %in% sel_all) %>% collect() %>% 
           select(-row_names) -> half_table1
         
@@ -1510,18 +974,9 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
           
           arrange(desc(Hits)) %>% ungroup() %>% 
           slice(1:input$CommTop2) -> commTable
-        
-        
-        
-        
-        # data.table::setorder(setDT(filter(fullDataSet, DataSet %in% sel)), DataSet, -Log2FCAbs)[, indx := seq_len(.N), DataSet][indx <= input$CommTop] %>% 
-        #   #mutate(Dir = ifelse(Log2FC>0,"Up", "Down")) %>% group_by(Dir) %>% 
-        #     count(Gene_Symbol) %>% arrange(desc(n)) %>% slice(1:input$CommTop2) -> commTable
-        
+
         genes<- commTable$Gene_Symbol 
-        print("from commtable")
-        print(genes)
-        
+
         commTable %>% select(Gene_Symbol, Hits, Up, Down) %>% 
           mutate(
             isUp = case_when(
@@ -1536,11 +991,9 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
         
         
         output$overlapTable <- render_gt({
-          #future({
           gt(commTable) %>% cols_split_delim(delim = ">") %>% 
             fmt_missing(columns = 1:ncol(.), missing_text = "-")
-          
-          #})
+
         }, height = px(400)
         )
         shinyjs::show("overlapTable")
@@ -1581,8 +1034,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
         
         hh[!is.na(hh)] <- 1
         hh[is.na(hh)] <- 0
-        
-        #showTab(inputId = "LUResults","HM5")
+
         output$HM5 <- renderPlot({
           pheatmap::pheatmap(hh,
                              color = c("slategray3", "steelblue4"),
@@ -1597,44 +1049,16 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
         
         showTab("LUResults","Overlapping HM", select = FALSE,
                 session )
-        
-        
-        #shinyjs::disable(input$gene)
-        # fullDataSet %>% select(Gene_Symbol, Log2FC, DataSet, ecdfPlot) %>% 
-        #   filter(DataSet %in% sel,
-        #          
-        #          if(input$ThresChoice == "Log2FC"){
-        #            
-        #            Log2FC >= input$CommThres | Log2FC <= (as.numeric(paste0("-", input$CommThres)))
-        #          }
-        #          
-        #          else if (input$ThresChoice == "ecdf") {
-        #            ecdfPlot >= input$CommThres2 | ecdfPlot <= (as.numeric(paste0("-", input$CommThres2)))
-        #          }
-        #          
-        #          
-        #          , !is.na(Gene_Symbol), 
-        #          !Gene_Symbol %in% c("Y_RNA", "Metazoa_SRP"),
-        #          !grepl("sno", Gene_Symbol, ignore.case = T),
-        #          !grepl("U\\d", Gene_Symbol), 
-        #          !grepl("RP11", Gene_Symbol), 
-        #          !grepl("LINC", Gene_Symbol),
-        #          !grepl("AC0", Gene_Symbol),
-        #          !grepl("LOC", Gene_Symbol),
-        #   ) %>% distinct(Gene_Symbol, DataSet, .keep_all = T) %>% 
-        #   count(Gene_Symbol, sort = T)  %>% head(input$CommTop) %>% pull(Gene_Symbol) -> genes
-        
+       
       }
       incProgress(3/10)
       
       
       tbl(my_db, "lookup_new") %>% 
-        #fullDataSet %>% 
         select(Gene_Symbol, Log2FC, Fold_Change, P_Value, ecdfPlot,DataSet, Group) %>%
         filter(Gene_Symbol %in% genes, DataSet %in% sel_all) %>% collect() -> half_table
       
       tbl(my_db, "lookup_userdefined") %>% 
-        #fullDataSet %>% 
         select(Gene_Symbol, Log2FC, Fold_Change, P_Value, ecdfPlot,DataSet, Group) %>% 
         filter(Gene_Symbol %in% genes, DataSet %in% sel_all) %>% 
         collect() -> half_table2  
@@ -1646,27 +1070,10 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
         mutate(DataSet = gsub("\\(|\\)| ", "-", DataSet),
                     DataSet = gsub(",", "", DataSet)
                      )
-        
-      
-      #tbl(my_db, "lookup_new") %>% 
-      #fullDataSet %>% 
-        #select(Gene_Symbol, Log2FC, Fold_Change, P_Value, ecdfPlot,DataSet, Group) %>% 
-        #filter(Gene_Symbol %in% genes, DataSet %in% sel) %>% collect() %>% 
-        #mutate(DataSet = gsub("\\(|\\)| ", "-", DataSet),
-         #      DataSet = gsub(",", "", DataSet)
-        #       )  -> fullDataSet2
-      
-      # fullDataSet_full %>% filter(DataSet %in% sel) %>% collect() %>% 
-      #   mutate(DataSet = gsub("\\(|\\)| ", "-", DataSet),
-      #          DataSet = gsub(",", "", DataSet)
-      #   )  -> fullDataSet_full
-      
+
       incProgress(4/10)
-      
-      
+
       fullDataSet2 %>% pull(Gene_Symbol) %>% unique()  -> FoundGenes
-      print("foundgenes")
-      print(FoundGenes)
       FoundGenesLength <- length(FoundGenes)
       notFoundGenes <- setdiff(genes, FoundGenes)
       output$targetMissing <- shiny::renderText(paste(notFoundGenes, collapse = ","))
@@ -1713,21 +1120,9 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
         distinct(Gene_Symbol,DataSet, .keep_all=T) %>% 
         spread(DataSet, fullInfo) -> lookup_table
       
-      #lookup_table2$Hits <- as.integer(lookup_table2$Hits)
-      
-      #output$t1 = shiny::renderTable({ 
-      
       spec <- fullDataSet2 %>% dplyr::rename(p = P_Value) %>% 
         expand(DataSet, .value = c("Log2FC", "p")) %>% 
         mutate(.name = paste0(DataSet, ">", .value))
-      
-      
-      
-      # fullDataSet2 %>% dplyr::rename(p = P_Value) %>% distinct(Gene_Symbol,DataSet, .keep_all=T) %>% 
-      #   select(-Gene_Symbol, -ecdfPlot) %>% 
-      #   mutate_if(is.numeric, round, 3) %>% 
-      #   pivot_wider_spec(spec = spec) %>% gt() %>% 
-      #   cols_split_delim(delim = ">") %>% fmt_missing(columns = 1:ncol(.), missing_text = "-") -> lookup_gt_table
       
       if (input$showtable == T) {
         output$t1 = renderReactable({
@@ -1762,25 +1157,14 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
               columnGroups = creatGroups(colnames(.[-1])) %>% distinct(name, .keep_all = T) %>%
                 pmap(colGroup)
             )
-          
-          # %>% gt() %>% 
-          #     cols_split_delim(delim = ">") %>% fmt_missing(columns = 1:ncol(.), missing_text = "-")
-         # })
+
         }
-      # } , 
-      # height = px(700) 
+
         )
         shinyjs::show("t1")
       }
       else {shinyjs::hide("t1")}
-      
-      
       incProgress(5/10)
-      
-      # na= "NA",
-      # align = "c", spacing = "m", bordered = T,
-      # striped = T, hover = T)
-      
       shinyjs::enable("act")
       
       output$lookupBarGraph <- renderPlot({
@@ -1788,7 +1172,6 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
           distinct(Gene_Symbol,DataSet, .keep_all=T) %>%
           mutate(hit = ifelse(Log2FC>=input$lookupBarGraphPar1, 1,
                               ifelse(Log2FC<=as.numeric(paste("-", input$lookupBarGraphPar1,sep = "")), 1,0
-                                     #ifelse(round(P_Value,2)<=0.05, 1, 0
                                      
                               ))) %>% 
           group_by(Gene_Symbol) %>% summarise(Hits = sum(hit, na.rm = T), 
@@ -1900,10 +1283,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
        
         
         hmpdf2 <<- function() {
-          
-          
           pheatmap::pheatmap(
-            
             if(input$HM_Par1 == "Log2FC") mmHM2
             else if (input$HM_Par1 == "FC") mmHM3
             else mmHM4,
@@ -1919,9 +1299,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             
             #c(-1, -0.99999,-0.25 ,0, 0.25 ,0.99999, 1)
             ,
-            
-            #col = hmcol2,
-            
+
             trace="none", na_col = "gray81",
             
             breaks = if(input$HM_Par1 == "Log2FC") col_breaks2()
@@ -1940,19 +1318,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             fontsize_row = input$heatmap2SizeRow,
             fontsize_col = input$heatmap2SizeCol
           )
-        #   heatmap.2(
-        #   mmHM2,scale="none",
-        #   Rowv = if(FoundGenesLength>1){T} else {F},
-        #   Colv = if(selLength>2){T} else {F},
-        #   col = hmcol2,trace="none", na.color = "gray81",
-        #   margin=c(7, 5),
-        #   cexCol=input$heatmap2SizeCol,
-        #   cexRow=input$heatmap2SizeRow,
-        #   #cexCol=0.42,
-        #   #cexRow=0.8,
-        #   density.info="density",
-        #   breaks = col_breaks2()
-        # )
+
         }
         
         
@@ -1969,144 +1335,174 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
           pdf(file)
           hmpdf2()
           dev.off()
-          
-          #file.copy("Log2FC_Heatmap.pdf", file)
+
         }
       )
       
-      # heatmap fc
-      # col_breaks3 = reactive({
-      #   c(seq(as.numeric(paste("-", input$heatmapTH2,sep = "")),-1,length=50),
-      #     0,
-      #     seq(1,input$heatmapTH2,length=50))
-      # })
-      # 
-      # hmcol3 <- colorRampPalette(c("yellow", "white", "red"))(n = 100)
-      # output$HM3 <- renderPlot( {
-      #   hmpdf3 <<- function() {heatmap.2(
-      #     
-      #     mmHM3,scale="none",
-      #     Rowv = if(FoundGenesLength>1){T} else {F},
-      #     Colv = if(selLength>2){T} else {F},
-      #     col = hmcol3,trace="none", na.color = "gray81",
-      #     
-      #     margin=c(7, 5),
-      #     cexCol=input$heatmap3SizeCol,
-      #     cexRow=input$heatmap3SizeRow,
-      #     #cexCol=0.42,cexRow=0.8,
-      #     density.info="density",
-      #     breaks = col_breaks3()
-      #   )
-      #   }
-      #   
-      #   hmpdf3()
-      # }
-      # 
-      # # pheatmap::pheatmap(
-      # #   mmHM3,scale="none",
-      # #   cluster_rows =if(FoundGenesLength>1){T} else {F},
-      # #   cluster_cols =if(selLength>2){T} else {F},
-      # #   col = hmcol3,trace="none", na_col = "gray81",
-      # #   breaks = col_breaks3()
-      # # )
-      # 
-      # # pheatmap(
-      # # 
-      # #   mmHM3,scale="none",
-      # #   cluster_rows  = if(FoundGenesLength>1){T} else {F},
-      # #   col = hmcol3,trace="none", na_col =  "gray81",
-      # #   margin=c(7, 5),
-      # #   breaks  = col_breaks3()
-      # # )
-      # )
-      # 
-      # output$HM3_down <- downloadHandler(
-      #   filename = function() {
-      #     "FC_Heatmap_kalediscope.pdf"
-      #   },
-      #   content = function(file) {
-      #     pdf(file)
-      #     hmpdf3()
-      #     dev.off()
-      #     
-      #     #file.copy("Log2FC_Heatmap.pdf", file)
-      #   }
-      # )
-      # 
-      # # heatmap Harmonized ecdf
-      # rownames(mmHM4) <- mmHM4$Gene_Symbol
-      # mmHM4 %>% select(-Gene_Symbol) %>% as.matrix() -> mmHM4
-      # class(mmHM4) <- "numeric"
-      # mmHM4[is.na(mmHM4)] <- 0
-      # 
-      # testmm <<- mmHM4
-      # 
+      observe({
+        go_ids_df_2 %>% filter(name == input$go_pathways) %>% 
+          pull(genes) %>% strsplit(",") -> go_genes_list
+        
+        go_genes_list[[1]] -> go_genes
+
+        tbl(my_db, "lookup_new") %>% 
+          select(Gene_Symbol, Log2FC, DataSet) %>%
+          filter(Gene_Symbol %in% go_genes, DataSet %in% sel_all) %>% collect() -> go_gene_table_1
+        
+        tbl(my_db, "lookup_userdefined") %>% 
+          #fullDataSet %>% 
+          select(Gene_Symbol, Log2FC, DataSet) %>% 
+          filter(Gene_Symbol %in% go_genes, DataSet %in% sel_all) %>% 
+          collect() -> go_gene_table_2  
+        
+        pre_sc_table %>% select(Gene_Symbol, Log2FC, DataSet) %>%
+          filter(Gene_Symbol %in% go_genes, DataSet %in% sel_all) -> go_gene_table_3
+        
+        go_gene_table <- rbind(go_gene_table_1, go_gene_table_2, go_gene_table_3) %>% 
+          mutate(DataSet = gsub("\\(|\\)| ", "-", DataSet),
+                 DataSet = gsub(",", "", DataSet)
+          )
+        
+        
+        go_pathway_values$table <- go_gene_table
+        go_pathway_values$genes <- go_genes
+        
+        go_pathway_values$scz_gsea <- filter(gsea_scz_df, pathway == input$go_pathways,
+                                             name %in% sel_all
+                                             )
+        
+      })
       
+      
+      output$lookup_path_fig <- renderPlot({
+        
+       
+      
+      go_pathway_values$table %>% mutate(Ref = case_when(
+        DataSet == input$lookup_pathway_ref ~ "Ref",
+        DataSet %in% dbListFull$`Cell Level` ~ "Cell",
+        T ~ "Region"
+      )) -> go_gene_table
+      
+      
+      go_gene_table %>% mutate(Ref = factor(Ref, levels = c("Ref", "Region", "Cell"))) %>% 
+        arrange(Ref) -> go_gene_table
+      
+      go_gene_table$DataSet <- factor(go_gene_table$DataSet, levels = go_gene_table$DataSet[order(go_gene_table$Ref)] %>% unique())
+      go_pathway_values$lims <- max(abs(go_gene_table$Log2FC))
+
+      pathway_fun <<- function() {
+        go_gene_table %>% 
+          ggplot(aes(DataSet, Log2FC, fill = Ref) ) + {if(input$lookup_path_fig_violin) geom_violin() } +
+          geom_boxplot(width = 0.3) + geom_point(size = 1) +
+          geom_hline(yintercept = 0, linetype = 2) +
+          labs(title = input$go_pathways, x = "",
+               subtitle = paste("Number of Genes in Set:", as.character(length(go_pathway_values$genes)))
+          ) +
+          theme(axis.text.x = element_text(angle = 45, vjust = 0.6, size = input$lookup_path_fig_textsize),
+                title = element_text(size = 8),
+                plot.subtitle = element_text(size = 6),
+                legend.title = element_blank()
+                #legend.position = "none"
+          ) + ylim(c(input$lookup_pathway_fig_lims * -1, input$lookup_pathway_fig_lims))
+      }
+      
+      pathway_fun()
+      
+      })
+      
+      output$pathway_down <- downloadHandler(
+        filename = function() {
+          "pathways_kalediscope.pdf"
+        },
+        content = function(file) {
+    
+          ggsave(file,pathway_fun(), useDingbats = T)
+
+        }
+      )
+      
+      output$lookup_path_lims <- renderText({
+        paste("top value = ", round(go_pathway_values$lims, 2))
+        })
+      
+      
+      output$lookup_gsea_path_fig <- renderPlot({
+        
+        
+        red_res_df <- go_pathway_values$scz_gsea
+        
+        
+        pathway_fun_2 <<- function() {
+        red_res_df %>% 
+          mutate(Group = case_when(
+            
+            name %in% dbListFull$`Cell Level` ~ "Cell",
+            name %in% dbListFull$`Region Leve` ~ "Region"
+          )) %>% 
+          ggplot(aes(reorder(name, ES), ES)) + geom_col(aes(fill = Group)) +
+            {if (input$lookup_gsea_path_fig_p) geom_point(data = subset(red_res_df, padj <= input$lookup_gsea_pathway_fig_lims))} +
+          coord_flip() +
+          labs(title = input$go_pathways
+          ) + 
+          theme(
+            title = element_text(size = 8),
+            plot.subtitle = element_text(size = 2),
+            legend.title = element_blank()
+          )
+        }
+        
+        pathway_fun_2()
+        
+      })
+      
+      output$lookup_gsea_path_tbl <- renderReactable({
+        go_pathway_values$scz_gsea %>% 
+          reactable(
+            searchable = T, resizable = T,highlight = T,
+            
+            defaultColDef = colDef(
+              #header = function(value) gsub("\\w+>", "kjn", value, fixed = TRUE),
+              cell = function(value) format(value, nsmall = 1),
+              align = "center",
+              minWidth = 70,
+              headerStyle = list(background = "#f7f7f8")
+            ))
+              
+      })
+      
+      output$pathway_down_2 <- downloadHandler(
+        filename = function() {
+          "gsea_pathways_kalediscope.pdf"
+        },
+        content = function(file) {
+          
+          ggsave(file,pathway_fun_2(), useDingbats = T)
+          
+        }
+      )
+      
+      output$pathway_down_3 <- downloadHandler(
+        filename = function() {
+          "gsea_pathways_kalediscope.txt"
+        },
+        content = function(file) {
+          write_delim(go_pathway_values$scz_gsea, file, delim = "\t")
+          
+          
+        }
+      )
+
       output$DatabasesFullInfo <- DT::renderDataTable(DT::datatable(fullDBsInfo,
                                                                     escape = FALSE, rownames = F, style = "bootstrap", options = list(columnDefs = list(list(
                                                                       className = 'dt-center', targets = "_all")))
       ))
-      
-      # scale_fill_gradientn(colours = c("yellow","white","white","red"), values = rescale(c(-1, -0.99999,-0.25 ,0, 0.25 ,0.99999, 1))
-      # col_breaks4 = c(seq(-1.2,-0.99,length=10), seq(-0.989, -0.96, length = 20), seq(-0.959, -0.80, length = 20), seq(-0.79, -0.50, length = 30), seq(-0.49, -0.1, length = 150),
-      #                 0,
-      #                 seq(0.1,0.49,length=150), seq(0.50, 0.79, length = 30), seq(0.80, 0.959, length = 20), seq(0.96, 0.989, length = 20), seq(0.99, 1.2, length = 10))
-      # 
-      # hmcol4 <- colorRampPalette(c("yellow","yellow2" ,"khaki1","lemonchiffon1","lightgoldenrodyellow","white", "lightpink1" ,"lightcoral","indianred1","orangered2","red"))(n = 460)
-      # output$HM4 <- renderPlot(heatmap.2(mmHM4,scale="none",col = hmcol4,trace="none", na.color = "gray81",margin=c(7, 5),cexCol=0.8,cexRow=0.5,density.info="density",breaks = col_breaks4))
-      
-      # output$HM4 <- renderPlot(
-      #   
-      #   #plotly::renderPlotly(
-      #   
-      #   pheatmap::pheatmap(
-      #     mmHM4,
-      #     breaks = c(seq(as.numeric(-2),
-      #                    -0.01,length=50),
-      #                0,
-      #                seq(0.01,2,length=50)),
-      #     color = c(colorRampPalette(c("yellow", "white"))(50), colorRampPalette(c("white"))(1), 
-      #               colorRampPalette(c("white", "red"))(50)
-      #     ),
-      #     trace="none", na_col = "gray81"
-      #   )
-      #   
-      #   # heatmaply::heatmaply(
-      #   #   mmHM4, limits = c(-1,1),
-      #   #   Rowv = if(FoundGenesLength>1){T} else {F},
-      #   #   scale_fill_gradient_fun = scale_fill_gradientn(
-      #   #     colours = c("yellow","white","white","red"),
-      #   #     values = scales::rescale(c(-1, -0.99999,-0.25 ,0, 0.25 ,0.99999, 1))
-      #   #   )
-      #   # )
-      #   
-      # )
-      
+
       incProgress(9/10)
-      
-      # {if (input$corGenes == "fullSig") {fullDataSet} else {fullDataSet2}} %>% 
-      #   filter(DataSet %in% sel) %>% 
-      #   filter(!is.na(Gene_Symbol), !is.na(Log2FC)) %>%
-      #   select(Gene_Symbol, Log2FC, DataSet) %>% 
-      #   distinct(Gene_Symbol, DataSet, .keep_all = T) %>% 
-      #   spread(DataSet, Log2FC) %>% 
-      #   column_to_rownames("Gene_Symbol") -> cormatr
-      # 
-      # 
-      # if (FoundGenesLength > 4 & length(sel) >= 2 ) {
-      #   
-      #   
-      #   cormatrRes<-rcorr(as.matrix(cormatr), type = "pearson")
-      #   cormatrRes$r[cormatrRes$n<5]<-0 # ignore less than five observations
-        
-      #fullDataSet2 ->> test_ds
+
         output$CorPlot <- renderPlot({
-          
-          
           if (FoundGenesLength > 4 & selLength >= 2 ) {
-            #{if (input$corGenes == "fullSig") {fullDataSet_full} else {fullDataSet2}} %>% 
             fullDataSet2 %>% 
-              #filter(DataSet %in% sel_all) %>% 
               filter(!is.na(Gene_Symbol), !is.na(Log2FC)) %>%
               select(Gene_Symbol, Log2FC, DataSet) %>% 
               distinct(Gene_Symbol, DataSet, .keep_all = T) %>% 
@@ -2117,10 +1513,6 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             cormatrRes$r[cormatrRes$n<5]<-0
             
           corrplot(cormatrRes$r, 
-                   # insig = "p-value", sig.level = -1,
-                   # p.mat = result2$P,
-                   #p.mat = asdP, insig = "label_sig",
-                   #sig.level = c(.001, .01, .05), pch.cex = .9, pch.col = "white",
                    tl.col = "black", order = "hclust",
                    method = "circle",type = "full", tl.cex = 0.5, cl.cex = 0.4)
           }
@@ -2130,50 +1522,20 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
     })
   })
   
-  # Upload a dataset ----
-  # observeEvent(input$DSupload, {
-  #   shinyjs::hide("err2")
-  #   flagDBerror <<- 0
-  #   targetFile = input$DSinput
-  #   pd <- readRDS(targetFile$datapath)
-  #   pd %>% mutate(DataSet = input$DSNameInput) -> pd
-  #   pdname <- input$DSNameInput
-  #   if (input$DSNameInput %in% levels(as.factor(fullDataSet$DataSet))) {
-  #     
-  #     errorMsgDB <- "Name is Already Taken"
-  #     
-  #     flagDBerror <<- 1
-  #     error_msgDB <- "Name is Already Taken"
-  #     output$err2 <- renderText({
-  #       paste("<font color=\"#FF0000\"><b>",error_msgDB)
-  #     })
-  #     shinyjs::show("err2")
-  #   }
-  #   
-  #   else {
-  #     fullDataSet <<- bind_rows(fullDataSet, pd)
-  #     AddedListFullDop <<- list(input$DSNameInput)
-  #     updatePickerInput(
-  #       session, 'dbs3', choices = AddedListFullDop)
-  #   }
-  #   
-  #   
-  # })
-  
-  
   # Barres Server Tab ----
   observeEvent(input$check, {
     req(input$checkEx)
     
     ti <- gsub(" ", "", input$checkEx, fixed = TRUE) %>% 
       toupper()
-    
-    #barresMouse %>% filter(GeneSymbol == ti) -> mouseonegene
-    
-    # Mouse bar plot
+
     if (input$checkEx!="") {
+      
+      tbl(my_db,"barres_mouse") %>% filter(GeneSymbol == ti) %>% collect() %>% select(-row_names)  -> mice_table_one
+      tbl(my_db,"barres_human") %>% filter(Gene == ti) %>% collect() %>% select(-row_names) -> human_table_one
+      
       output$barredMouseplot <- renderPlot({
-        tbl(my_db,"barres_mouse") %>% filter(GeneSymbol == ti) %>% ggplot(aes(x = reorder(CellType,FPKM), 
+        mice_table_one %>% ggplot(aes(x = reorder(CellType,FPKM), 
                                                                 y = if(input$barresPar){log10(FPKM+1)} else {FPKM})) + 
           geom_col(if(input$barresPar2) {aes(fill=CellType)}) + 
           coord_flip() + theme_light() +
@@ -2181,26 +1543,17 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
             title = paste(ti, "in Mouse"),
             x = "Cell Type",
             y = ifelse(input$barresPar,"Log10 of (FPKM+1)","FPKM")
-            # caption = "Ye Zhang, Kenian Chen, Steven A Sloan, Mariko L Bennett, 
-            # Anja R Scholze, Sean O'Keefe, Hemali P Phatnani, Paolo Guarnieri, 
-            # Christine Caneda, Nadine Ruderisch, Shuyun Deng, Shane A Liddelow, 
-            # Chaolin Zhang, Richard Daneman, Tom Maniatis, Ben A Barres, 
-            # Jia Qian Wu. 'An RNA-Seq transcriptome and splicing database of glia, 
-            # neurons, and vascular cells of the cerebral cortex.: 
-            # Journal of Neuroscience. 2014."
           ) +
           theme(legend.position = "none",axis.text.x = element_text(size = 13),
                 axis.text.y = element_text(size = 13), 
                 plot.title = element_text(hjust = 0.5, size = 15))
       })
       
-      # Human bar plot
       output$barredHumanplot <- renderPlot({
-        tbl(my_db,"barres_human")  %>% filter(Gene == ti) %>% ggplot(aes(x = reorder(CellType,FPKM), 
+        human_table_one %>% ggplot(aes(x = reorder(CellType,FPKM), 
                                                           y = if(input$barresPar){log10(FPKM+1)} else {FPKM})) + 
           geom_col(if(input$barresPar2) {aes(fill=CellType)}) + 
           coord_flip() + theme_light() + 
-          #gghighlight(CellType %in% c("Neurons","FetalAstrocytes"), unhighlighted_colour = "gray50") +
           labs(
             title = paste(ti, "in Human"),
             x = "Cell Type",
@@ -2210,6 +1563,25 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
                 axis.text.y = element_text(size = 13), 
                 plot.title = element_text(hjust = 0.5, size = 15)) 
       })
+      
+      output$brainrnaseq_table_om <- downloadHandler(
+        filename = function() {
+          paste("mice_s_brainrnaseq_celltypes", ".csv", sep = "")
+        },
+        content = function(file) {
+          write.csv(mice_table_one, file, row.names = FALSE)
+        }
+      )
+      
+      output$brainrnaseq_table_oh <- downloadHandler(
+        filename = function() {
+          paste("human_s_brainrnaseq_celltypes", ".csv", sep = "")
+        },
+        content = function(file) {
+          write.csv(human_table_one, file, row.names = FALSE)
+        }
+      )
+      
     }
   })
   
@@ -2219,7 +1591,9 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
       strsplit(",") %>% unlist()
     
     if (input$checkEx2!="") {
-      tbl(my_db,"barres_mouse") %>% filter(GeneSymbol %in% ti2) -> barresMouse
+      tbl(my_db,"barres_mouse") %>% filter(GeneSymbol %in% ti2) %>% collect() %>% select(-row_names) -> barresMouse
+      tbl(my_db,"barres_human") %>% filter(Gene %in% ti2) %>% collect() %>% select(-row_names) -> barresHuman 
+      
       output$barredAllplot2 <- renderPlot({
         barresMouse %>% ggplot(aes(x = reorder(CellType,FPKM), 
                                                                    y = {log10(FPKM+1)}, fill = CellType)) + 
@@ -2273,8 +1647,6 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
         
       })
       
-      
-      tbl(my_db,"barres_human") %>% filter(Gene %in% ti2) -> barresHuman
       output$barredAllplot5 <- renderPlot({
         barresHuman %>% 
           ggplot(aes(x = reorder(CellType,FPKM), 
@@ -2330,101 +1702,29 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
       })
       
       
+      output$brainrnaseq_table_mm <- downloadHandler(
+        filename = function() {
+          paste("mice_m_brainrnaseq_celltypes", ".csv", sep = "")
+        },
+        content = function(file) {
+          write.csv(barresMouse, file, row.names = FALSE)
+        }
+      )
+      
+      output$brainrnaseq_table_mh <- downloadHandler(
+        filename = function() {
+          paste("human_m_brainrnaseq_celltypes", ".csv", sep = "")
+        },
+        content = function(file) {
+          write.csv(barresHuman, file, row.names = FALSE)
+        }
+      )
+      
+      
     }
     
   })
-  # BrainCloud Remote Server Tab ----
-  # observeEvent(input$BCget, {
-  #   shinyjs::disable("BCget")
-  #   req(input$BCstr)
-  #   
-  #   BChidden <- setNames(
-  #     html_nodes(pre_pg, "input[type='hidden']") %>% html_attr("value"),
-  #     html_nodes(pre_pg, "input[type='hidden']") %>% html_attr("name")
-  #   )
-  #   BCgene <- gsub(" ", "", input$BCstr, fixed = TRUE)
-  #   BCcurl <- 
-  #     POST(
-  #       url = "http://braincloud.jhmi.edu/plots/",  
-  #       body = list(
-  #         `__VIEWSTATE` = BChidden["__VIEWSTATE"],
-  #         `__VIEWSTATEGENERATOR` = BChidden["__VIEWSTATEGENERATOR"],
-  #         `__EVENTVALIDATION` = BChidden["__EVENTVALIDATION"],
-  #         txtSearch = BCgene, 
-  #         btnGo = "Go"
-  #       ), 
-  #       encode = "form"
-  #     )
-  #   pg <- content(BCcurl, as="text")
-  #   BCImageSrc <- paste0("http://braincloud.jhmi.edu/plots/",
-  #                        regmatches(pg,
-  #                                   regexpr(paste0("ProbeID[\\w-]+-",
-  #                                                  toupper(BCgene),"_[\\w-]+\\.jpg"),
-  #                                           pg, perl=T)))
-  #   
-  #   shinyalert(
-  #     title = BCgene, imageUrl = BCImageSrc,
-  #     imageWidth = 450, imageHeight = 400
-  #     
-  #   )
-  #   
-  #   shinyjs::enable("BCget")
-  # })
   
-  # DataSets Overview Server Tab ----
-  # output$DsGraph <- renderPlot(
-  #   
-  #   {
-  #     
-  #     fullDataSet %>% dplyr::filter(DataSet == input$DsSelect, !is.na(Gene_Symbol)) %>% 
-  #       dplyr::select(Gene_Symbol, Log2FC,P_Value) %>% 
-  #       mutate(
-  #         threshold = ifelse(
-  #           Log2FC >= input$DSslider2 | 
-  #             Log2FC <= as.numeric(paste("-", input$DSslider2,sep = "")),
-  #           "Yes", "No")) %>% 
-  #       ggplot(aes(Log2FC, log10(P_Value))) + 
-  #       geom_point(aes(colour = threshold),
-  #                  size = 1) +
-  #       scale_y_continuous(trans = "reverse") +
-  #       geom_text_repel(
-  #         data = subset(fullDataSet %>% 
-  #                         dplyr::filter(DataSet == input$DsSelect,!is.na(Gene_Symbol)),
-  #                       Log2FC>input$DSslider3 | 
-  #                         Log2FC<as.numeric(paste("-", input$DSslider3,sep = ""))), 
-  #         aes(label = Gene_Symbol)) + 
-  #       scale_color_manual(
-  #         values = c( "Yes" ="red",
-  #                     "No" = "black"),guide = F) + theme_light() +
-  #       theme(
-  #         plot.title = element_text(family = "Comic Sans MS" , color="black", size=14, face="italic", hjust = .5)) + 
-  #       geom_hline(yintercept = as.numeric(paste("-", input$DSslider2,sep = "")), alpha = 1/5) + geom_hline(yintercept = input$DSslider2, alpha = 1/5) +
-  #       ggtitle(input$DsSelect)
-  #     
-  #   }
-  # )
-  # 
-  # output$DStable <- shiny::renderDataTable({
-  #   fullDataSet %>% dplyr::filter(DataSet == input$DsSelect,!is.na(Gene_Symbol)) %>% 
-  #     dplyr::select(Gene_Symbol, Log2FC) %>% 
-  #     filter(Log2FC > input$DSslider2 | Log2FC < as.numeric(paste("-", input$DSslider2,sep = "")))
-  #   
-  # })
-  # numGenes <- ""
-  # numGenesAfter <- ""
-  # output$DSoutput <- renderText({
-  #   
-  #   fullDataSet %>% dplyr::filter(DataSet == input$DsSelect,!is.na(Gene_Symbol)) %>%
-  #     dplyr::select(Gene_Symbol) %>% group_by(Gene_Symbol) %>% 
-  #     summarise(count = n()) %>% summarise(sum(count)) %>% pull() -> numGenes
-  #   
-  #   fullDataSet %>% dplyr::filter(DataSet == input$DsSelect,!is.na(Gene_Symbol)) %>%
-  #     dplyr::select(Gene_Symbol, Log2FC) %>% 
-  #     filter(Log2FC > input$DSslider2 | Log2FC < as.numeric(paste("-", input$DSslider2,sep = ""))) %>% 
-  #     group_by(Gene_Symbol) %>% summarise(count = n()) %>% summarise(sum(count)) %>% pull() -> numGenesAfter
-  #   paste(numGenesAfter, "out of",numGenes)
-  #   
-  # })
   
   # BrainSpan Server Tab ----
   
@@ -2592,9 +1892,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
     shinyjs::hide("brainAtlasPlot")
     
     req(input$brainAtlasText)
-    
-    
-    
+
     brainAtlasGenes <- gsub(" ", "", input$brainAtlasText, fixed = TRUE)
     brainAtlasGenes <- strsplit(brainAtlasGenes, ",")[[1]] %>% map_chr(toupper)
     
@@ -2605,19 +1903,14 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
       summarise(mean_cpm = mean(CPM_mean, na.rm = T), min_cpm = min(CPM_mean,na.rm = T), 
                 max_cpm = max(CPM_mean,na.rm = T)) %>% 
       mutate_if(is.numeric,round,4) -> BATable1
-    
-    
-    
-    
+
     output$BAtable1 = DT::renderDataTable(
       DT::datatable(
         BATable1, escape = FALSE, rownames = F, style = "bootstrap", options = list(columnDefs = list(list(
           className = 'dt-center', targets = "_all")))
       )
     )
-    
-    
-    
+
     output$BAtable2 = DT::renderDataTable({
       brainAtlasInfo %>% filter(CellType == input$BAtable2Set1) %>% 
         mutate(prpor = CritPassCountsPerCluster/totalCountPerCluster) %>% 
@@ -2641,10 +1934,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
                      rowCallback = JS("function(r,d) {$(r).attr('height', '60px')}")
         )
       )
-      # BATable1 %>% select(CellType, gene, mean_cpm) %>% spread(CellType, mean_cpm) %>% 
-      #   mutate_if(is.numeric, ~(.+1) ) %>% mutate_if(is.numeric, log10) %>% 
-      #   mutate_if(is.numeric, round, 4) %>% 
-      #   mutate(Group1VsGroup2 = get(input$BAtable2Set1) - get(input$BAtable2Set2))
+
     })
     
     output$BAtabl2PassedCrit = renderText({
@@ -2701,12 +1991,9 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
     shinyjs::hide("GTExPlot1")
     
     req(input$GTExText1)
-    
-    
-    
+
     GTEx1Genes1 <- gsub(" ", "", input$GTExText1, fixed = TRUE)
     GTEx1Genes1 <- strsplit(GTEx1Genes1, ",")[[1]] %>% map_chr(toupper)
-    
     
     tbl(my_db, "gtex_median_expr") %>% filter(Description %in% GTEx1Genes1) %>% 
       select(-row_names, -gene_id) %>% collect() %>% 
@@ -2724,12 +2011,10 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
                #scale = if(input$GTEx_Par3) {"row"} else "none",
                cluster_rows = if(length(GTEx1Genes1)>1) {T} else {F},
                cluster_col = if(input$GTEx_Par2) {T} else {F}
-               
-               #scale = if(input$brainAtlasPar1) {"row"} else {"none"}
+
       )
     })
     
-    #DT::datatable({})
     
     gtexSelcs <-input$dbsGTEx
     
@@ -2746,20 +2031,6 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
     })
     shinyjs::show("GTExPlot1")
   })
-  
-  
-  # observeEvent(input$GTExButton2, {
-  # 
-  #   req(input$GTExText2)
-  # 
-  #   GTEx1Genes2 <- gsub(" ", "", input$GTExText2, fixed = TRUE)
-  #   GTEx1Genes2 <- strsplit(GTEx1Genes2, ",")[[1]] %>% map_chr(toupper)
-  # 
-  #   output$GTExeQTLTable <-  shiny::renderDataTable({
-  #     GTExQTLData  %>% filter(gene_name %in% GTEx1Genes2, Tissue %in% input$dbsGTEx)
-  #   })
-  #   
-  # })
   
   
   # GWAS Tab ----
@@ -2823,41 +2094,6 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
     
   })
   
-  # observeEvent(input$GTExButton2, {
-  #   #shinyjs::hide("errBA")
-  #   shinyjs::hide("GTExPlot2")
-  # 
-  #   req(input$GTExText2)
-  # 
-  #   GTEx1Genes2 <- gsub(" ", "", input$GTExText2, fixed = TRUE)
-  #   GTEx1Genes2 <- strsplit(GTEx1Genes2, ",")[[1]] %>% map_chr(toupper)
-  # 
-  #   GTExGeneBrainExp  %>% filter(Description %in% GTEx1Genes2) %>% gather(Donor, Expr, 2:1672) -> GTExGeneBrainExpFinal
-  # 
-  #   sampleAtr$Donor = gsub("-", ".", sampleAtr$SAMPID)
-  #   sampleAtr %>% select(-SAMPID) -> sampleAtr
-  # 
-  #   GTExGeneBrainExpFinal %>% pull(Donor) %>% unique() -> cc
-  #   sampleAtr %>% filter(Donor %in% cc) -> sampleAtrBrain
-  # 
-  #   full_join(sampleAtrBrain, GTExGeneBrainExpFinal, by = "Donor") -> GTExGeneBrainExpFinal
-  # 
-  #   GTExGeneBrainExpFinal %>% select(-Donor) %>% rename(Gene = Description, Region = SMTS,
-  #                                                       SubRegion = SMTSD,TPM = Expr) %>%
-  #     select(Gene, Region, SubRegion, TPM) -> GTExGeneBrainExpFinal
-  # 
-  #   output$GTExPlot2 <- renderPlot({
-  #   GTExGeneBrainExpFinal %>% ggplot(aes(SubRegion, if(input$GTEx_Par3){log10(TPM+1)} else {TPM} , fill = Gene)) +
-  #     geom_boxplot() +
-  #     theme_bw() + labs(y = if(input$GTEx_Par3){"Log10(TPM+1)"} else {"TPM"} ) +
-  #     theme(axis.text.x = element_text(size = 10, angle = 30, hjust = 1))
-  # 
-  #   })
-  # 
-  #   shinyjs::show("GTExPlot2")
-  # 
-  # })
-  
   output$uplaodingInfo <- renderText(
     "Two options to upload datasets:
     1. to Server: The dataset will be uploaded to the server.
@@ -2903,23 +2139,14 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
     
     if(is.data.frame(test)) {
       updatePickerInput(session, 'dbs_added_sc', choices = test$DataSet %>% unique())
-      print("where is it?")
+      
     }
     else {
       shinyalert("Opps", test, type = "error")
     }
-    #try(
-    #addingds(finalTable)
-    #, outFile = "Wrong")
-    #try()
+
   })
-  
-  
-  
-  
-  
-  
-  
+
 }
 
 # Run App ----
