@@ -101,7 +101,7 @@ ui <-
                 fluidPage(
                   fluidRow(
                     column(6, 
-                           textInput("strNet", "Enter a target", placeholder = "", value = ""),
+                           textInput("strNet", "Type a Protein/Gene Symbol", placeholder = "", value = ""),
                            sliderInput("slider1", label = h3("Score"), min = 0,
                                        max = 999, value = 500, step = 10),
                            numericInput("scoreInp","", min = 0, max = 999, value = 500),
@@ -351,31 +351,31 @@ ui <-
                 
         ),
         # GeneShot UI Tab ----
-        tabItem("geneShot", 
-                fluidPage(
-                  textInput("geneShotTerm", "Type search term:", placeholder = "ex. Schizophrenia, Bipolar Disorder, etc...", value = ""),
-                  textInput("geneShotGenes", "(Optional) Type gene(s) to label:", placeholder = "ex. DISC1, NRXN1, etc...", value = ""),
-                  switchInput(inputId = "geneShotPar1",size = "mini", label = "Label Genes?", value = T),
-                  switchInput(inputId = "geneShotPar2",size = "mini", label = "Log?", value = F),
-                  actionButton("geneShotButton", "Search"),
-                  tags$hr(),
-                  box(width = 12,"Figures", status = "primary",
-                      
-                      tabsetPanel(id = "geneShotPanel", 
-                                  tabPanel("Static",
-                                           plotOutput("geneShotStatic")
-                                  ),
-                                  tabPanel("Interactive", 
-                                           plotly::plotlyOutput("geneShotInt")
-                                  )
-                      )
-                      
-                      
-                  ), htmlOutput("geneShoterr")
-                  
-                )
-                
-        ),
+        # tabItem("geneShot", 
+        #         fluidPage(
+        #           textInput("geneShotTerm", "Type search term:", placeholder = "ex. Schizophrenia, Bipolar Disorder, etc...", value = ""),
+        #           textInput("geneShotGenes", "(Optional) Type gene(s) to label:", placeholder = "ex. DISC1, NRXN1, etc...", value = ""),
+        #           switchInput(inputId = "geneShotPar1",size = "mini", label = "Label Genes?", value = T),
+        #           switchInput(inputId = "geneShotPar2",size = "mini", label = "Log?", value = F),
+        #           actionButton("geneShotButton", "Search"),
+        #           tags$hr(),
+        #           box(width = 12,"Figures", status = "primary",
+        #               
+        #               tabsetPanel(id = "geneShotPanel", 
+        #                           tabPanel("Static",
+        #                                    plotOutput("geneShotStatic")
+        #                           ),
+        #                           tabPanel("Interactive", 
+        #                                    plotly::plotlyOutput("geneShotInt")
+        #                           )
+        #               )
+        #               
+        #               
+        #           ), htmlOutput("geneShoterr")
+        #           
+        #         )
+        #         
+        # ),
         # BrainAtlas UI Tab ----
         tabItem("brainAtlas", 
                 fluidPage(
@@ -1831,60 +1831,60 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6323933/")
   })
   
   # GeneShot Server Tab ----
-  observeEvent(input$geneShotButton, {
-    
-    shinyjs::disable("geneShotButton")
-    shinyjs::hide("geneShoterr")
-    shinyjs::hide("geneShotStatic")
-    shinyjs::hide("geneShotInt")
-    
-    req(input$geneShotTerm)
-    
-    geneShotTermIn <- gsub("\\s+", "+", input$geneShotTerm) %>% toupper()
-    geneShotGenesIn <- gsub(" ", "", input$geneShotGenes, fixed = TRUE)
-    geneShotGenesIn <- strsplit(geneShotGenesIn, ",")[[1]] %>% map_chr(toupper)
-    
-  
-    geneShoturl <- paste0("http://amp.pharm.mssm.edu/geneshot/api/search/auto/", geneShotTermIn)
-    
-    geneShotOutput <- content(GET(geneShoturl))
-    
-    if (length(geneShotOutput$gene_count) > 0) {
-    enframe(geneShotOutput$gene_count) %>% unnest(cols = "value") %>% 
-      group_by(name) %>% 
-      mutate(col=seq_along(name)) %>% ungroup() %>% 
-      spread(key=col, value=value) %>% rename(Gene = name, 
-                                              Count = `1`,
-                                              Normalized = `2`
-      )  %>% unnest(cols = c("Count", "Normalized")) -> geneShotTable
-    
-    geneShotTable %>% ggplot(aes(Count, Normalized, label = Gene)) + geom_point() +
-      labs(x = "Number of Publications",
-           y = "Proprtion of Publications Related to Search Term"
-           ) + 
-      theme_bw() -> p1 
-      
-    
-    output$geneShotStatic <- renderPlot(p1 + {if(input$geneShotPar2)scale_x_log10()} + 
-                                          {if(input$geneShotPar1) ggrepel::geom_label_repel(data = subset(geneShotTable, Gene %in% geneShotGenesIn))})
-    output$geneShotInt <- plotly::renderPlotly(plotly::ggplotly(p1 + {if(input$geneShotPar2)scale_x_log10()}
-                                                                
-                                                                , tooltip = c("Gene", "Count", "Normalized")))
-    
-    shinyjs::show("geneShotStatic")
-    shinyjs::show("geneShotInt")
-    shinyjs::enable("geneShotButton")
-    }
-    
-    else {
-      error_msg <- "The search term was not found"
-      output$geneShoterr <- renderText({ paste("<font color=\"#FF0000\"><b>",error_msg) })
-      shinyjs::show("geneShoterr")
-      shinyjs::enable("geneShotButton")
-    }
-    
-    
-  })
+  # observeEvent(input$geneShotButton, {
+  #   
+  #   shinyjs::disable("geneShotButton")
+  #   shinyjs::hide("geneShoterr")
+  #   shinyjs::hide("geneShotStatic")
+  #   shinyjs::hide("geneShotInt")
+  #   
+  #   req(input$geneShotTerm)
+  #   
+  #   geneShotTermIn <- gsub("\\s+", "+", input$geneShotTerm) %>% toupper()
+  #   geneShotGenesIn <- gsub(" ", "", input$geneShotGenes, fixed = TRUE)
+  #   geneShotGenesIn <- strsplit(geneShotGenesIn, ",")[[1]] %>% map_chr(toupper)
+  #   
+  # 
+  #   geneShoturl <- paste0("http://amp.pharm.mssm.edu/geneshot/api/search/auto/", geneShotTermIn)
+  #   
+  #   geneShotOutput <- content(GET(geneShoturl))
+  #   
+  #   if (length(geneShotOutput$gene_count) > 0) {
+  #   enframe(geneShotOutput$gene_count) %>% unnest(cols = "value") %>% 
+  #     group_by(name) %>% 
+  #     mutate(col=seq_along(name)) %>% ungroup() %>% 
+  #     spread(key=col, value=value) %>% rename(Gene = name, 
+  #                                             Count = `1`,
+  #                                             Normalized = `2`
+  #     )  %>% unnest(cols = c("Count", "Normalized")) -> geneShotTable
+  #   
+  #   geneShotTable %>% ggplot(aes(Count, Normalized, label = Gene)) + geom_point() +
+  #     labs(x = "Number of Publications",
+  #          y = "Proprtion of Publications Related to Search Term"
+  #          ) + 
+  #     theme_bw() -> p1 
+  #     
+  #   
+  #   output$geneShotStatic <- renderPlot(p1 + {if(input$geneShotPar2)scale_x_log10()} + 
+  #                                         {if(input$geneShotPar1) ggrepel::geom_label_repel(data = subset(geneShotTable, Gene %in% geneShotGenesIn))})
+  #   output$geneShotInt <- plotly::renderPlotly(plotly::ggplotly(p1 + {if(input$geneShotPar2)scale_x_log10()}
+  #                                                               
+  #                                                               , tooltip = c("Gene", "Count", "Normalized")))
+  #   
+  #   shinyjs::show("geneShotStatic")
+  #   shinyjs::show("geneShotInt")
+  #   shinyjs::enable("geneShotButton")
+  #   }
+  #   
+  #   else {
+  #     error_msg <- "The search term was not found"
+  #     output$geneShoterr <- renderText({ paste("<font color=\"#FF0000\"><b>",error_msg) })
+  #     shinyjs::show("geneShoterr")
+  #     shinyjs::enable("geneShotButton")
+  #   }
+  #   
+  #   
+  # })
   
   # BrainAtlas Tab ----
   observeEvent(input$brainAtlasButton, {

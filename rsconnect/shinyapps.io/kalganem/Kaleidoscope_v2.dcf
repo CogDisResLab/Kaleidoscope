@@ -1,0 +1,13 @@
+name: Kaleidoscope_v2
+title: Kaleidoscope_v2
+username:
+account: kalganem
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4186779
+bundleId: 4816953
+url: https://kalganem.shinyapps.io/Kaleidoscope_v2/
+when: 1626221444.0711
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: app.R|README.md|README.Rmd|data|R|scripts
