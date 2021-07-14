@@ -20,7 +20,7 @@ Kaleidoscope aims to be a bioinformatics pipeline for in silico hypothesis explo
 
 ## Workflow
 
-![Kaleidoscope Workflow](Figures/KS_WorkflowFigure.png)
+![Kaleidoscope Workflow](www/assets/images/KS_WorkflowFigure.png)
 
 ## Interface
 
