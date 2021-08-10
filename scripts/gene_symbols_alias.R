@@ -12,6 +12,8 @@ my_db <- dbPool(
   password = "20211411kKk$%^$"
 )  
 
+
+
 dbListTables(my_db)
 
 

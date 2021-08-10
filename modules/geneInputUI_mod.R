@@ -28,6 +28,8 @@ geneOutput <- function(id, ...) {
     id,
     function(input, output, session) {
       
+      #req(reactive(input$gene_input))
+      
       list(
         genes = reactive(input$gene_input), 
         btn = reactive(input$btn),

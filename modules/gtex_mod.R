@@ -55,8 +55,9 @@ gtex_server <- function(id) {
       
       observeEvent(genes_ids$btn(), {
         
+        #req(genes_ids$genes())
         genes <- isolate(genes_ids$genes())
-        req(genes)
+        #req(genes)
         
         w$show()
         
@@ -164,16 +165,27 @@ gtex_server <- function(id) {
         shinyFeedback::resetLoadingButton("genes-btn")
         
       }
+      
+      
+      
+      
       )}
+    
+    
+    
     )
   }
 
 # gtex function 
 ks_gtex <- function(genes, db = my_db) {
-  tbl(my_db,"gtex_data") %>% 
-    filter(Gene %in% genes) %>% 
-    collect() %>% 
-    janitor::clean_names() -> table_res
+  
+  suppressWarnings(
+    tbl(my_db,"gtex_data") %>% 
+      filter(Gene %in% genes) %>% 
+      collect() %>% 
+      janitor::clean_names() -> table_res
+  )
+  
   
   if(nrow(table_res) > 0) {
     return(table_res)

@@ -55,7 +55,7 @@ brainatlas_server <- function(id, ...) {
       observeEvent(genes_ids$btn(), {
         
         genes <- isolate(genes_ids$genes())
-        req(genes)
+        #req(genes)
         
         w$show()
         
@@ -228,9 +228,12 @@ brainatlas_server <- function(id, ...) {
 
 ks_brainatlas <- function(genes, db = my_db) {
   
-  tbl(my_db, "brain_atlas_data") %>% filter(gene %in% genes) %>% 
-    select(gene, cluster, CellType, CPM_mean) %>%
-    collect() %>% mutate_if(is.numeric, round, 2) -> table_res
+  suppressWarnings(
+    tbl(my_db, "brain_atlas_data") %>% filter(gene %in% genes) %>% 
+      select(gene, cluster, CellType, CPM_mean) %>%
+      collect() %>% mutate_if(is.numeric, round, 2) -> table_res
+  
+  )
   
   if(nrow(table_res) > 0) {
     return(table_res)

@@ -109,7 +109,7 @@ lookup_server <- function(id) {
       updatePickerInput(session, "dbs11", choices = filter(ks_datasets, Group %in% c("Coronaviru", "Other", "MB")) %>% pull(DataSet))
 
       ns <- session$ns
-      w <- Waiter$new(ns(c("plot1", "plot2")), 
+      w <- Waiter$new(ns(c("plot1", "plot2", "heatmap_plot")), 
                       html = spin_loaders(37, color = "black"), 
                       color = transparent(.5)
       )
@@ -127,15 +127,6 @@ lookup_server <- function(id) {
       })
 
       observeEvent(genes_ids$btn(), {
-        
-
-        genes <- isolate(genes_ids$genes())
-        req(genes)
-
-        datasets_selected <- c(input$dbs1,input$dbs2, input$dbs3, input$dbs4, input$dbs5, input$dbs6, input$dbs7, input$dbs8, input$dbs9, input$dbs10, input$dbs11)
-        req(datasets_selected)
-        
-        w$show()
         
         shinyjs::hide("lookup_tabset_div")
         shinyjs::hide("table")
@@ -157,228 +148,259 @@ lookup_server <- function(id) {
         shinyjs::hide("hm_slider2")
         shinyjs::hide("hm_slider3")
         
-        
 
-        genes <- process_gene_input(genes)
-        
-        genesets_ds <- c(paste0(datasets_selected, "_all"), paste0(datasets_selected, "_up"), paste0(datasets_selected, "_down"))
-        
+        genes_raw <- isolate(genes_ids$genes())
+        #req(genes)
 
-        look_res <- withProgress(message = "connecting to KS database ...", {
+        datasets_selected <- c(input$dbs1,input$dbs2, input$dbs3, input$dbs4, input$dbs5, input$dbs6, input$dbs7, input$dbs8, input$dbs9, input$dbs10, input$dbs11)
+        #req(datasets_selected)
+        
+        if(!any(all(trimws(genes_raw) == "") | is.null(datasets_selected))){
+          w$show()
           
-          list(
-            lookup_df = ks_lookup(genes = genes, datasets = datasets_selected),
-            geneset_df = ks_lookup_geneset(genes = genes, datasets = genesets_ds)
-          )
+          genes <- process_gene_input(genes_raw)
           
-        })
-        
-        
-
-
-        if(!is.null(look_res$lookup_df)) {
-
-          output$table <- renderReactable({
-            look_res$lookup_df %>% select(HGNC_Symbol, Log2FC, DataSet) %>%
+          if (identical(genes, character(0))) {
+            genes <- ""
+          } else {}
+          
+          genesets_ds <- c(paste0(datasets_selected, "_all"), paste0(datasets_selected, "_up"), paste0(datasets_selected, "_down"))
+          
+          
+          look_res <- withProgress(message = "connecting to KS database ...", {
+            
+            list(
+              lookup_df = ks_lookup(genes = genes, datasets = datasets_selected),
+              geneset_df = ks_lookup_geneset(genes = genes, datasets = genesets_ds)
+            )
+            
+          })
+          
+          
+          
+          
+          if(!is.null(look_res$lookup_df)) {
+            
+            output$table <- renderReactable({
+              look_res$lookup_df %>% select(HGNC_Symbol, Log2FC, DataSet) %>%
                 pivot_wider(names_from = DataSet, values_from = Log2FC) %>%
                 reactable(searchable = TRUE,
                           striped = TRUE,
                           bordered = TRUE)
-          })
-          
-          download_btn_server(id = "dn_btn", 
-                              look_res$lookup_df %>% select(HGNC_Symbol, Log2FC, DataSet) %>%
-                                pivot_wider(names_from = DataSet, values_from = Log2FC), 
-                              name = "Lookup_Table")
-          
-          
-
-
-
-          output$plot1 <- renderEcharts4r({
-
-            look_res$lookup_df %>%
-              group_by(HGNC_Symbol) %>%
-              summarise(Upregulated = sum(Log2FC > input$slider1),
-                        Downregulated = sum(Log2FC< (input$slider1 * -1)) * -1) %>%
-              pivot_longer(Upregulated:Downregulated, names_to = "Type") %>%
-              group_by(Type) %>%
-              e_charts(x = HGNC_Symbol) %>%
-              e_bar(value, stack = "grp") %>%
-              e_flip_coords() %>%
-              e_grid(
-                left = 100, # pixels
-                top = "15%" # percentage = responsive
-              ) %>%
-              e_title(subtext = "Number of times a gene found to be upregulated or downregulated based on the selected cutoff") %>%
-              e_toolbox() %>%
-              e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>%
-              e_tooltip() %>% 
-              e_legend(top = 35)
-
-          })
-
-          output$plot2 <- renderEcharts4r({
-
-            look_res$lookup_df %>%
-              group_by(DataSet) %>%
-              summarise(Upregulated = sum(Log2FC > input$slider1),
-                        Downregulated = sum(Log2FC< (input$slider1 * -1)) * -1) %>%
-              pivot_longer(Upregulated:Downregulated, names_to = "Type") %>%
-              group_by(Type) %>%
-              e_charts(x = DataSet) %>%
-              e_bar(value, stack = "grp") %>%
-              e_flip_coords() %>%
-              e_grid(
-                left = 250, # pixels
-                top = "15%" # percentage = responsive
-              ) %>%
-              e_title(subtext = "Number of genes found to be upregulated or downregulated based on the selected cutoff in each dataset") %>%
-              e_toolbox() %>%
-              e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>%
-              e_tooltip() %>% 
-              e_legend(top = 35)
-
-          })
-
-          
-          output$plot3 <- renderPlot({
-            look_res$lookup_df %>% 
-              group_by(HGNC_Symbol) %>%
-              mutate(mean_LFC=median(Log2FC)) %>%
-              ungroup() %>% 
-              ggplot(aes(x = reorder(HGNC_Symbol, Log2FC, median), y = Log2FC, fill = mean_LFC)) +
-              ggdist::stat_halfeye(adjust = .9,width = .7,justification = -.2,.width = 0,point_colour = NA) +
-              geom_boxplot(width = .3,outlier.color = NA) +
-              gghalves::geom_half_point(side = "l", range_scale = .4, alpha = .3, size = 1) +
-              scale_fill_gradient2(low="blue",high = "red", mid = "orange", midpoint = 0) +
-              coord_flip() +
-              theme(legend.position = "none") +
-              labs(x = "", title = "Differential Gene Expression Patterns Across all Selected Datasets")
-          })
-          
-
-          output$plot4 <- renderEcharts4r({
-
-            look_res$lookup_df %>%
-              group_by(HGNC_Symbol) %>%
-              summarise(Upregulated = sum(Log2FC> input$slider1),
-                        Downregulated = sum(Log2FC< (input$slider1 * -1)),
-                        Unchnaged = sum(Log2FC > (input$slider1 * -1) && Log2FC < input$slider1)) %>%
-              pivot_longer(Upregulated:Unchnaged, names_to = "Type") %>%
-              group_by(Type) %>%
-              summarise(n = sum(value)) %>%
-              e_charts(Type) %>%
-              e_pie(n, radius = c("40%", "60%"), itemStyle = list(borderRadius = 10, borderWidth = 2),
-                    label = list(formatter = "{b}: {@n} ({d}%)")
-                    ) %>%
-              e_title(subtext = "Percentage of input genes found to be upregulated or downregulated based on the selected cutoff") %>% 
-              e_toolbox() %>%
-              e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>%
-              e_tooltip() %>% 
-              e_legend(bottom = 0)
-
-          })
-          
-          
-          output$geneset_network <- visNetwork::renderVisNetwork({
-            w_net$show()
-            
-            on.exit({
-              w_net$hide()
-            })
-            look_res$geneset_df %>% hypeR::hyp_emap(similarity_cutoff = input$slider3, title = "Enrichment Network (Nodes = genesets, edges= similarity between genesets, color= enrichment significance - FDR ) - zoom in to reveal the names")
-            
-          })
-          
-          
-          
-          output$plot5 <- renderPlot({
-            
-            w_net$show()
-            
-            on.exit({
-              w_net$hide()
             })
             
-            look_res$geneset_df %>% hypeR::hyp_dots(top = input$slider2, title = "Gene Set Enrichment Analysis (FDR)") + 
-              labs(y = "")
-            
-          })
-          
-          output$genset_table <- renderReactable({
-            
-            look_res$geneset_df$as.data.frame() %>% 
-              select(-background) %>% as_tibble() %>%
-              rename(Geneset = label, Geneset_Size = geneset, `P-Value` = pval, 
-                     Input_Size = signature, FDR = fdr, 
-                     Overlap = overlap, Hits = hits) %>% 
-              reactable::reactable(searchable = TRUE,
-                                   striped = TRUE,
-                                   bordered = TRUE)
-            
-          })
-          
-          
-
-          output$heatmap_plot <- plotly::renderPlotly({
-
-            look_res$lookup_df %>% select(HGNC_Symbol, Log2FC, DataSet) %>%
-              pivot_wider(names_from = DataSet, values_from = Log2FC) %>%
-              column_to_rownames("HGNC_Symbol") -> mm
+            download_btn_server(id = "dn_btn", 
+                                look_res$lookup_df %>% select(HGNC_Symbol, Log2FC, DataSet) %>%
+                                  pivot_wider(names_from = DataSet, values_from = Log2FC), 
+                                name = "Lookup_Table")
             
             
-            labelmatrix<-matrix(paste0("LFC: ",as.numeric(unlist(mm))),nrow=nrow(mm),ncol=ncol(mm))
-
-            heatmaply::heatmaply(
-              matrix_rescale(mm, min = (input$hm_slider1 * -1), max = input$hm_slider1), scale = "none", 
-              Rowv = ifelse(nrow(mm) > 1, T, F),
-              fontsize_col = input$hm_slider2,
-              fontsize_row = input$hm_slider3,
-              scale_fill_gradient_fun = scale_fill_gradient2(
-                low = "blue", 
-                mid = "white",
-                high = "red", 
-                midpoint = 0, 
-                limits = c((input$hm_slider1 * -1), input$hm_slider1)),
+            
+            
+            
+            output$plot1 <- renderEcharts4r({
+              
+              look_res$lookup_df %>%
+                group_by(HGNC_Symbol) %>%
+                summarise(Upregulated = sum(Log2FC > input$slider1),
+                          Downregulated = sum(Log2FC< (input$slider1 * -1)) * -1) %>%
+                pivot_longer(Upregulated:Downregulated, names_to = "Type") %>%
+                group_by(Type) %>%
+                e_charts(x = HGNC_Symbol) %>%
+                e_bar(value, stack = "grp") %>%
+                e_flip_coords() %>%
+                e_grid(
+                  left = 100, # pixels
+                  top = "15%" # percentage = responsive
+                ) %>%
+                e_title(subtext = "Number of times a gene found to be upregulated or downregulated based on the selected cutoff") %>%
+                e_toolbox() %>%
+                e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>%
+                e_tooltip() %>% 
+                e_legend(top = 35)
+              
+            })
+            
+            output$plot2 <- renderEcharts4r({
+              
+              look_res$lookup_df %>%
+                group_by(DataSet) %>%
+                summarise(Upregulated = sum(Log2FC > input$slider1),
+                          Downregulated = sum(Log2FC< (input$slider1 * -1)) * -1) %>%
+                pivot_longer(Upregulated:Downregulated, names_to = "Type") %>%
+                group_by(Type) %>%
+                e_charts(x = DataSet) %>%
+                e_bar(value, stack = "grp") %>%
+                e_flip_coords() %>%
+                e_grid(
+                  left = 250, # pixels
+                  top = "15%" # percentage = responsive
+                ) %>%
+                e_title(subtext = "Number of genes found to be upregulated or downregulated based on the selected cutoff in each dataset") %>%
+                e_toolbox() %>%
+                e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>%
+                e_tooltip() %>% 
+                e_legend(top = 35)
+              
+            })
+            
+            
+            output$plot3 <- renderPlot({
+              look_res$lookup_df %>% 
+                group_by(HGNC_Symbol) %>%
+                mutate(mean_LFC=median(Log2FC)) %>%
+                ungroup() %>% 
+                ggplot(aes(x = reorder(HGNC_Symbol, Log2FC, median), y = Log2FC, fill = mean_LFC)) +
+                ggdist::stat_halfeye(adjust = .9,width = .7,justification = -.2,.width = 0,point_colour = NA) +
+                geom_boxplot(width = .3,outlier.color = NA) +
+                gghalves::geom_half_point(side = "l", range_scale = .4, alpha = .3, size = 1) +
+                scale_fill_gradient2(low="blue",high = "red", mid = "orange", midpoint = 0) +
+                coord_flip() +
+                theme(legend.position = "none") +
+                labs(x = "", title = "Differential Gene Expression Patterns Across all Selected Datasets")
+            })
+            
+            
+            output$plot4 <- renderEcharts4r({
+              
+              look_res$lookup_df %>%
+                group_by(HGNC_Symbol) %>%
+                summarise(Upregulated = sum(Log2FC> input$slider1),
+                          Downregulated = sum(Log2FC< (input$slider1 * -1)),
+                          Unchnaged = sum(Log2FC > (input$slider1 * -1) && Log2FC < input$slider1)) %>%
+                pivot_longer(Upregulated:Unchnaged, names_to = "Type") %>%
+                group_by(Type) %>%
+                summarise(n = sum(value)) %>%
+                e_charts(Type) %>%
+                e_pie(n, radius = c("40%", "60%"), itemStyle = list(borderRadius = 10, borderWidth = 2),
+                      label = list(formatter = "{b}: {@n} ({d}%)")
+                ) %>%
+                e_title(subtext = "Percentage of input genes found to be upregulated or downregulated based on the selected cutoff") %>% 
+                e_toolbox() %>%
+                e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>%
+                e_tooltip() %>% 
+                e_legend(bottom = 0)
+              
+            })
+            
+            
+            output$geneset_network <- visNetwork::renderVisNetwork({
+              w_net$show()
+              
+              on.exit({
+                w_net$hide()
+              })
+              look_res$geneset_df %>% hypeR::hyp_emap(similarity_cutoff = input$slider3, title = "Enrichment Network (Nodes = genesets, edges= similarity between genesets, color= enrichment significance - FDR ) - zoom in to reveal the names")
+              
+            })
+            
+            
+            
+            output$plot5 <- renderPlot({
+              
+              w_net$show()
+              
+              on.exit({
+                w_net$hide()
+              })
+              
+              look_res$geneset_df %>% hypeR::hyp_dots(top = input$slider2, title = "Gene Set Enrichment Analysis (FDR)") + 
+                labs(y = "")
+              
+            })
+            
+            output$genset_table <- renderReactable({
+              
+              look_res$geneset_df$as.data.frame() %>% 
+                select(-background) %>% as_tibble() %>%
+                rename(Geneset = label, Geneset_Size = geneset, `P-Value` = pval, 
+                       Input_Size = signature, FDR = fdr, 
+                       Overlap = overlap, Hits = hits) %>% 
+                reactable::reactable(searchable = TRUE,
+                                     striped = TRUE,
+                                     bordered = TRUE)
+              
+            })
+            
+            
+            
+            output$heatmap_plot <- plotly::renderPlotly({
+              
+              look_res$lookup_df %>% select(HGNC_Symbol, Log2FC, DataSet) %>%
+                pivot_wider(names_from = DataSet, values_from = Log2FC) %>%
+                column_to_rownames("HGNC_Symbol") -> mm
+              
+              
+              labelmatrix<-matrix(paste0("LFC: ",as.numeric(unlist(mm))),nrow=nrow(mm),ncol=ncol(mm))
+              
+              heatmaply::heatmaply(
+                matrix_rescale(mm, min = (input$hm_slider1 * -1), max = input$hm_slider1), scale = "none", 
+                Rowv = ifelse(nrow(mm) > 1, T, F),
+                fontsize_col = input$hm_slider2,
+                fontsize_row = input$hm_slider3,
+                scale_fill_gradient_fun = scale_fill_gradient2(
+                  low = "blue", 
+                  mid = "white",
+                  high = "red", 
+                  midpoint = 0, 
+                  limits = c((input$hm_slider1 * -1), input$hm_slider1)),
                 label_names = c("Gene", "DataSet", "Scaled Value"),
                 custom_hovertext = labelmatrix
               )
-
+              
+              
+              
+              
+            })
             
-
-
-          })
-
-          shinyjs::show("lookup_tabset_div")
-          shinyjs::show("table")
+            shinyjs::show("lookup_tabset_div")
+            shinyjs::show("table")
+            
+            shinyjs::show("plot1")
+            shinyjs::show("plot2")
+            shinyjs::show("plot3")
+            shinyjs::show("plot4")
+            shinyjs::show("plot5")
+            shinyjs::show("dn_btn_div")
+            shinyjs::show("box_1")
+            shinyjs::show("box_2")
+            shinyjs::show("heatmap_plot")
+            shinyjs::show("geneset_network")
+            shinyjs::show("genset_table")
+            shinyjs::show("slider1")
+            shinyjs::show("slider2")
+            shinyjs::show("slider3")
+            shinyjs::show("hm_slider1")
+            shinyjs::show("hm_slider2")
+            shinyjs::show("hm_slider3")
+            
           
-          shinyjs::show("plot1")
-          shinyjs::show("plot2")
-          shinyjs::show("plot3")
-          shinyjs::show("plot4")
-          shinyjs::show("plot5")
-          shinyjs::show("dn_btn_div")
-          shinyjs::show("box_1")
-          shinyjs::show("box_2")
-          shinyjs::show("heatmap_plot")
-          shinyjs::show("geneset_network")
-          shinyjs::show("genset_table")
-          shinyjs::show("slider1")
-          shinyjs::show("slider2")
-          shinyjs::show("slider3")
-          shinyjs::show("hm_slider1")
-          shinyjs::show("hm_slider2")
-          shinyjs::show("hm_slider3")
-
+            
+          }
+          
+          else {
+            shinyalert("Opps", "Couldn't Find Your Gene/s", type = "error")
+            
+          }
+          
+          
         }
-
         else {
-          shinyalert("Opps", "Couldn't Find Your Gene/s", type = "error")
           
+          if(all(trimws(genes_raw) == "")){
+            shinyalert("Opps", "Please Enter a Gene Symbol", type = "error")
+          }
+          else {
+            shinyalert("Opps", "Please Select at Least One Dataset", type = "error")
+          }
+
         }
         
         shinyFeedback::resetLoadingButton("genes-btn")
+        
+        
+        
+        
 
 
       })

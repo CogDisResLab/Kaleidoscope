@@ -75,6 +75,12 @@ string_server <- function(id) {
     id,
     function(input, output, session) {
       
+      ns <- session$ns
+      w <- Waiter$new(ns(c("string_img")), 
+                      html = spin_loaders(37, color = "black"), 
+                      color = transparent(.5)
+      )
+      
       genes_ids <- geneOutput("genes")
       
       observeEvent(genes_ids$info_btn(),{
@@ -85,6 +91,8 @@ string_server <- function(id) {
 
       observeEvent(genes_ids$btn(), {
         
+        w$show()
+        
         shinyjs::hide("string_img")
         shinyjs::hide("table")
         shinyjs::hide("interactors_genes")
@@ -93,7 +101,7 @@ string_server <- function(id) {
         shinyjs::hide("dn_btn_div")
         #shinyjs::hide("stringTab-enrichr_btn-btn")
         
-        req(genes_ids$genes())
+        #req(genes_ids$genes())
         
          string_output <- withProgress(message = "connecting to STRING ...", {
            ks_string(process_gene_input(genes_ids$genes(), type = "single"),score = input$score_slider, nodes = input$node_slider)

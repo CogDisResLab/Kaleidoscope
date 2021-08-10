@@ -36,7 +36,7 @@ ilincs_server <- function(id) {
       observeEvent(genes_ids$btn(), {
         
         genes <- isolate(genes_ids$genes())
-        req(genes)
+        #req(genes)
         
         shinyjs::hide("plot1")
         shinyjs::hide("plot2")

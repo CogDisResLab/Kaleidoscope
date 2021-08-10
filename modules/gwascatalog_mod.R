@@ -36,7 +36,7 @@ gwascatalog_server <- function(id) {
       observeEvent(genes_ids$btn(), {
         
         genes <- isolate(genes_ids$genes())
-        req(genes)
+        #req(genes)
         
 
         shinyjs::hide("table1")
@@ -194,12 +194,14 @@ gwascatalog_server <- function(id) {
 }
 
 ks_gwas <- function(genes, db = my_db) {
+  suppressWarnings(
   tbl(my_db,"gwas_data") %>% 
     filter(Gene %in% genes) %>% 
     collect() %>% 
     rename(Risk_Allele = `STRONGEST.SNP.RISK.ALLELE`, Trait = `DISEASE.TRAIT`, 
            Type = `CONTEXT`, Sample_Size = `INITIAL.SAMPLE.SIZE`, Link = LINK
            ) -> table_res
+  )
   
   ifelse(nrow(table_res) > 0, return(table_res), return(NULL))
   

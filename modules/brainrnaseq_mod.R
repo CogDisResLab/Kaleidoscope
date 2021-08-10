@@ -52,7 +52,7 @@ brainrnaseq_server <- function(id) {
       observeEvent(genes_ids$btn(), {
 
         genes <- isolate(genes_ids$genes())
-        req(genes)
+        #req(genes)
         
         shinyjs::hide("plot1_human")
         shinyjs::hide("plot1_mice")
@@ -209,10 +209,10 @@ brainrnaseq_server <- function(id) {
           download_btn_server(id = "dn_btn", 
                               tbl = rbind(
                                 bs_res_mice %>% mutate(Species = "Mouse"), 
-                                bs_res_human %>% mutate(Species = "Human") %>% 
-                                  rename(`log10(FPKM+1)` = FPKM)
-                                
-                              ), name = "BarinRNASeq_Table")
+                                bs_res_human %>% mutate(Species = "Human")
+                                ) %>% 
+                                rename(`log10(FPKM+1)` = FPKM)
+                              , name = "BarinRNASeq_Table")
           
           shinyjs::show("plot1_human")
           shinyjs::show("plot1_mice")
@@ -241,6 +241,8 @@ brainrnaseq_server <- function(id) {
 
 ks_brainseq <- function(genes, db = my_db) {
   
+  suppressWarnings({
+  
   tbl(my_db,"brainseq_mouse_updated") %>% 
     filter(HGNC_Symbol %in% genes) %>% 
     collect() %>% 
@@ -250,6 +252,8 @@ ks_brainseq <- function(genes, db = my_db) {
     filter(HGNC_Symbol %in% genes) %>% 
     collect() %>% 
     mutate(Species = "Human" ,FPKM = round(log10(FPKM + 1), 2)) -> human_table_one
+  
+  })
   
   rbind(mice_table_one,human_table_one)
   
