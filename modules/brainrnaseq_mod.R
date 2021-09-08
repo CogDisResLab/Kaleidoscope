@@ -114,7 +114,7 @@ brainrnaseq_server <- function(id) {
                        axisLine = list(onZero = F),
                        nameLocation = "middle", 
                        nameGap = 40) %>% 
-              e_title("Brain RNA-Seq in Mice", subtext = "Gene Expression values ( log10(FPKM + 1)) Per Cell Type") %>% 
+              e_title("Brain RNA-Seq in Mice", subtext = "Gene Expression values (log10(FPKM + 1)) Per Cell Type") %>% 
               e_tooltip() %>% 
               e_toolbox() %>%
               e_toolbox_feature(feature = c("saveAsImage", "dataView"))

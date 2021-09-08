@@ -30,7 +30,7 @@ lookup_ui <- function(id) {
                   tabPanel("Summary",
                            fluidRow(
                              column(width = 12, reactableOutput(ns("table")),
-                                    div(id = ns("dn_btn_div"), download_btn_ui(ns("dn_btn")))
+                                    div(id = ns("dn_btn_div"), download_btn_ui(ns("dn_btn")), download_btn_ui(ns("dn_btn2"), label = "Download with pvalues"))
                                     ),
                              column(width = 12, hr()),
                              column(width = 5,
@@ -167,7 +167,7 @@ lookup_server <- function(id) {
           genesets_ds <- c(paste0(datasets_selected, "_all"), paste0(datasets_selected, "_up"), paste0(datasets_selected, "_down"))
           
           
-          look_res <- withProgress(message = "connecting to KS database ...", {
+          look_res <<- withProgress(message = "connecting to KS database ...", {
             
             list(
               lookup_df = ks_lookup(genes = genes, datasets = datasets_selected),
@@ -193,6 +193,13 @@ lookup_server <- function(id) {
                                 look_res$lookup_df %>% select(HGNC_Symbol, Log2FC, DataSet) %>%
                                   pivot_wider(names_from = DataSet, values_from = Log2FC), 
                                 name = "Lookup_Table")
+            
+            download_btn_server(id = "dn_btn2",
+                                look_res$lookup_df %>% 
+                                  mutate(Values = paste0(Log2FC, ", p=", P_Value)) %>% 
+                                  select(HGNC_Symbol, DataSet, Values) %>% 
+                                  pivot_wider(names_from = DataSet, values_from = Values),
+                                name = "Lookup_Table_with_pvalues")
             
             
             

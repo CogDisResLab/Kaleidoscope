@@ -5,8 +5,9 @@ account: kalganem
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1977280
-bundleId: 4317809
+bundleId: 5012372
 url: https://kalganem.shinyapps.io/Kaleidoscope/
-when: 1615234159.99687
+when: 1631112848.03193
 asMultiple: FALSE
 asStatic: FALSE
+ignoredFiles: app.R|README.md|README.Rmd|data|R|scripts
