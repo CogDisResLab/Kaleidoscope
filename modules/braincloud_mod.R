@@ -204,7 +204,7 @@ plot_bc <- function(df, group, title, text, se, min, max, ...) {
 }
 
 braincloud_info_html <- HTML('<div class="features-icon"><span class="icon-linegraph"></span></div>
-                  <h3 class="features-title font-alt">BrainCloud</h3>
+                  <h1 class="features-title font-alt">BrainCloud</h1>
                   <p>Transcription levels in the human prefrontal cortex across the lifespan. Post-mortem brains from fetal 
 development through ageing to highlight the role of the human genome in cortical development, function 
 and ageing. (n = 269 subjects without neuropathological or neuropsychiatric diagnosis). Age ranges: fetal, 

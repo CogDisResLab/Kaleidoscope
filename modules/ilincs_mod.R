@@ -160,7 +160,7 @@ lincs_api_call <- function(x, lib = c("LIB_6", "LIB_11")) {
   
 }
 
-'http://www.ilincs.org/api/SignatureMeta?filter={"where":{"treatment":"sdfkjhkjh","libraryid":"LIB_6"}}'
+#'http://www.ilincs.org/api/SignatureMeta?filter={"where":{"treatment":"sdfkjhkjh","libraryid":"LIB_6"}}'
 
 ks_ilincs <- function(genes, knockdown = T, overexpression = F) {
   
@@ -195,7 +195,7 @@ ks_ilincs <- function(genes, knockdown = T, overexpression = F) {
 }
 
 ilincs_info_html <- HTML('<div class="features-icon"><span class="icon-lifesaver"></span></div>
-                  <h3 class="features-title font-alt">iLINCS</h3>
+                  <h1 class="features-title font-alt">iLINCS</h1>
                   <p>The integrative web platform for analysis of LINCS data and LINCS L1000 signatures. Uses the L1000 assay which is a gene-expression profiling assay based on the direct measurement of a reduced representation 
 of the transcriptome and computational inference of the portion of the transcriptome not explicitly measured under different 
 perturbations (like genes knockdown, drugs treatments, gene overexpression .. etc).</p>

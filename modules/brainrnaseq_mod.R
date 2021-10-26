@@ -260,7 +260,7 @@ ks_brainseq <- function(genes, db = my_db) {
 }
 
 brainseq_info_html <- HTML('<div class="features-icon"><span class="icon-bargraph"></span></div>
-                  <h3 class="features-title font-alt">BRAIN RNA-Seq</h3>
+                  <h1 class="features-title font-alt">BrainRNA-Seq</h1>
                   <p>RNA-seq of cells isolated and purified from mouse and human brain from grey matter of cortex tissue. 
 Purified using cell-type specific antibodies (anti-CD45 to capture microglia/macrophages, anti-GalC 
 hybridoma supernatant to harvest oligodendrocytes, anti-O4 hybridoma to harvest OPCs, anti-Thy1 (CD90) 

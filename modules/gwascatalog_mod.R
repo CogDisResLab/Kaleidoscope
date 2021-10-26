@@ -208,7 +208,7 @@ ks_gwas <- function(genes, db = my_db) {
 }
 
 gwas_info_html <- HTML('<div class="features-icon"><span class="icon-map"></span></div>
-                  <h3 class="features-title font-alt">GWAS Catalog</h3>
+                  <h1 class="features-title font-alt">GWAS Catalog</h1>
                   <p>A curated collection of all published genome-wide association studies that currently contains 3841 publications and 126603 
 genetic variant - phenotype associations</p>
                          <h3 class = "features-title font-alt">Resources</h3>

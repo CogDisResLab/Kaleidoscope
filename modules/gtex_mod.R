@@ -203,7 +203,7 @@ log_transfomed <- function(x) {
 }
 
 gtex_info_html <- HTML('<div class="features-icon"><span class="icon-profile-male"></span></div>
-                  <h3 class="features-title font-alt">GTEx</h3>
+                  <h1 class="features-title font-alt">GTEx</h1>
                   <p>Database contains data of tissue-specific gene expression and regulation. 
 Samples were collected from 53 tissues from almost 1000 individuals, primarily for molecular assays including WGS, 
 WES, and RNA-Seq. Has eQTL, expression quantitative trait loci, data for all studied tissues to identify variant-gene

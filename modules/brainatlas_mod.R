@@ -247,7 +247,7 @@ ks_brainatlas <- function(genes, db = my_db) {
 }
 
 brainatlas_info_html <- HTML('<div class="features-icon"><span class="icon-aperture"></span></div>
-                  <h3 class="features-title font-alt">BrainAtlas</h3>
+                  <h1 class="features-title font-alt">BrainAtlas</h1>
                   <p>Gene expression of nuclei derived from frozen human brain specimens to survey cell type diversity. Anatomical 
 specificity is achieved by microdissecting tissue from defined brain areas. Currently this the tab contains: RNA-Seq 
 data created from intact nuclei derived from frozen human brain specimens, to survey cell type diversity in the human

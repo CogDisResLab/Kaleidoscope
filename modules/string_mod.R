@@ -298,7 +298,7 @@ convert_na <- function(x, value = 1) {
 
 
 string_info_html <- HTML('<div class="features-icon"><span class="icon-genius"></span></div>
-                  <h3 class="features-title font-alt">STRING</h3>
+                  <h1 class="features-title font-alt">STRING</h1>
                   <p>Database of known and predicted protein-protein interactions. The interactions include direct (physical)
                   and indirect (functional) associations; they stem from computational prediction, from knowledge transfer between organisms, 
                   and from interactions aggregated from other (primary) databases.</p>

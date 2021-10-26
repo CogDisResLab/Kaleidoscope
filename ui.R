@@ -76,7 +76,11 @@ shinyUI(
                                        # GWAS ----
                                        tabPanel("GWAS", icon = icon("", class = "icon-map"),
                                                 gwascatalog_UI("gwascatalogTab")
-                                                )
+                                                ),
+                                       tabPanel("Report", icon = icon("", class = "file-contract"),
+                                                report_ui("reportTab")
+                                       )
+
                                        
                                        )
                             )

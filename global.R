@@ -35,6 +35,7 @@ source("modules/lookup_mod.R")
 source("modules/enrichr_mod.R")
 source("modules/info_mod.R")
 source("modules/download_mod.R")
+source("modules/report_mod.R")
 
 # Data ----
 

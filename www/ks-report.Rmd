@@ -1,0 +1,809 @@
+---
+title: |
+  ![](ks_logo_new.svg){width=1in}
+  Kaleidoscope Report
+author: "The Cognitive Disorders Research Laboratory (CDRL)"
+date: "`r format(Sys.time(), '%d %B, %Y - %H:%M:%S %Z')`"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    code_folding: hide
+    theme: paper
+params:
+  gene: NA
+  brainrnaseq: True
+  ilincs: True
+  gwas: True
+  braincloud: True
+  string: True
+  brainatlas: True
+  gtex: True
+  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, error = F, message = F)
+
+library(downloadthis)
+```
+
+```{css, echo=FALSE}
+
+.spi-rating {
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 50%;
+  color: #000;
+  font-size: 13px;
+  letter-spacing: -2px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 12px;
+  border-radius: 15px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.status-overexpression {
+  background: hsl(116, 60%, 90%);
+  color: hsl(116, 30%, 25%);
+}
+
+
+.status-knockdown {
+  background: hsl(350, 70%, 90%);
+  color: hsl(350, 45%, 30%);
+}
+
+```
+
+
+# About
+
+***Kaleidoscope*** is an interactive R Shiny web application that provides a platform for an easy access to biological databases and bioinformatics tools via a user-friendly interface that could be explored by researchers to test hypotheses in silico. Query your target genes across different biological databases and tools to explore your research questions. The observations obtained from this platform could supplement existing hypotheses, spawn new ones and possibly direct future studies.
+
+# Input
+
+```{r, echo = FALSE}
+genes <- process_gene_input(params$gene)
+```
+
+**`r toupper(params$gene)`**
+
+
+```{r, eval=params$brainrnaseq, include=params$brainrnaseq, echo=FALSE}
+
+brainseq_info_html
+h2("Human")
+
+```
+
+```{r, eval=params$brainrnaseq, include=params$brainrnaseq}
+
+bs_res <- ks_brainseq(genes = genes, db = my_db) 
+
+bs_res_human <- filter(bs_res, Species == "Human")
+bs_res_mice <- filter(bs_res, Species == "Mice")
+          
+bs_multi_genes_flag <- F
+bs_multi_genes_flag <- any(c(length(unique(bs_res_human$HGNC_Symbol)), length(unique(bs_res_mice$HGNC_Symbol))) > 1)
+          
+
+bs_res_human %>% 
+  group_by(HGNC_Symbol) %>%
+  e_charts(CellType, timeline = ifelse(bs_multi_genes_flag, T, F), renderer="svg") %>%
+  e_bar(FPKM, legend = F) %>% 
+  e_flip_coords() %>% 
+  e_grid(
+    left = 200, # pixels
+    top = "15%" # percentage = responsive
+  ) %>% 
+  e_x_axis(name = "log10(FPKM + 1)", 
+           axisLine = list(onZero = F),
+           nameLocation = "middle", 
+           nameGap = 40) %>% 
+  e_title("Brain RNA-Seq in Human", subtext = "Gene Expression values (log10(FPKM + 1)) Per Cell Type") %>% 
+  e_tooltip() %>% 
+  e_toolbox() %>%
+  e_toolbox_feature(feature = c("saveAsImage", "dataView"))
+
+
+if(bs_multi_genes_flag) {
+bs_res_human %>% 
+  group_by(CellType) %>% 
+  e_charts(renderer="svg") %>%
+  e_boxplot(FPKM, itemStyle = list(color = "#b8c5f2"), layout = "horizontal") %>% 
+  e_x_axis(type = "category", axisLabel =list(rotate = 45, fontSize = 8) ) %>% 
+  e_y_axis(name = "log10(FPKM + 1)", 
+           axisLine = list(onZero = F),
+           nameLocation = "middle", 
+           nameGap = 40
+           ) %>% 
+  e_title("Brain RNA-Seq in Human", 
+          subtext = "Gene Expression values ( log10(FPKM + 1)) Per Cell Type of Input Genes") %>% 
+  e_tooltip() %>% 
+  e_toolbox() %>%
+  e_toolbox_feature(feature = c("saveAsImage", "dataView"))
+  
+}
+
+bs_res_human %>% 
+    group_by(CellType) %>% 
+    summarise(FPKM = mean(FPKM)) %>% 
+    mutate(total = sum(FPKM), prob = (FPKM/total)*100, 
+           Avg = "Input") %>% 
+    rbind(all_human_prop) %>% select(CellType, Avg, prob) %>% 
+    mutate_if(is.numeric, round, 2) %>% 
+    pivot_wider(names_from = Avg, values_from = prob) %>% 
+    e_charts(CellType, renderer="svg") %>% 
+    e_radar(Avg, max = 50) %>% 
+    e_radar(Input, max = 50) %>% 
+    e_title("Brain RNA-Seq in Human", subtext = "Proportion of Gene Expression values Per Cell Type") %>%
+    e_tooltip() %>% 
+    e_toolbox() %>%
+    e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+    e_legend(left = "left", top = "middle", orient = "vertical")
+
+
+```
+
+```{r, eval=params$brainrnaseq, include=params$brainrnaseq, echo=FALSE}
+bs_res_human %>% select(HGNC_Symbol, CellType, FPKM) %>% 
+  pivot_wider(names_from = CellType, values_from = FPKM) %>% 
+  reactable(searchable = TRUE,
+          striped = TRUE,
+          bordered = TRUE,
+          filterable = TRUE, 
+          defaultColDef = colDef(
+                       headerStyle = list(fontSize = '10px', align = "center")
+          )
+  )
+
+download_this(bs_res_human %>% select(HGNC_Symbol, CellType, FPKM) %>% 
+  pivot_wider(names_from = CellType, values_from = FPKM),
+    output_name = "brainseq_human",
+    output_extension = ".xlsx",
+    button_label = "Download Table",
+    button_type = "default",
+    has_icon = TRUE,
+    icon = "fa fa-save"
+  )
+
+h2("Mouse")
+```
+
+```{r, eval=params$brainrnaseq, include=params$brainrnaseq}
+bs_res_mice %>% 
+  group_by(HGNC_Symbol) %>%
+  e_charts(CellType, timeline = ifelse(bs_multi_genes_flag, T, F), renderer="svg") %>%
+  e_bar(FPKM, legend = F) %>% 
+  e_flip_coords() %>% 
+  e_grid(
+    left = 200, # pixels
+    top = "15%" # percentage = responsive
+  ) %>% 
+  e_x_axis(name = "log10(FPKM + 1)", 
+           axisLine = list(onZero = F),
+           nameLocation = "middle", 
+           nameGap = 40) %>% 
+  e_title("Brain RNA-Seq in Mice", subtext = "Gene Expression values (log10(FPKM + 1)) Per Cell Type") %>% 
+  e_tooltip() %>% 
+  e_toolbox() %>%
+  e_toolbox_feature(feature = c("saveAsImage", "dataView"))
+
+if(bs_multi_genes_flag) {
+bs_res_mice %>% 
+  group_by(CellType) %>% 
+  e_charts(renderer="svg") %>%
+  e_boxplot(FPKM, itemStyle = list(color = "#b8c5f2")) %>%
+  e_x_axis(type = "category", axisLabel =list(rotate = 45, fontSize = 6) ) %>% 
+  e_y_axis(name = "log10(FPKM + 1)", 
+           axisLine = list(onZero = F),
+           nameLocation = "middle",
+           nameGap = 40
+           ) %>% 
+  e_title("Brain RNA-Seq in Mice", 
+          subtext = "Gene Expression values ( log10(FPKM + 1)) Per Cell Type of Input Genes") %>%
+  e_tooltip() %>% 
+  e_toolbox() %>%
+  e_toolbox_feature(feature = c("saveAsImage", "dataView"))
+
+     
+}
+
+
+bs_res_mice %>% 
+              group_by(CellType) %>% 
+              summarise(FPKM = sum(FPKM)) %>% 
+              mutate(total = sum(FPKM), prob = (FPKM/total)*100, 
+                     Avg = "Input") %>% 
+              rbind(all_mice_prop) %>% select(CellType, Avg, prob) %>% 
+              mutate_if(is.numeric, round, 2) %>% 
+              pivot_wider(names_from = Avg, values_from = prob) %>% 
+              e_charts(CellType, renderer="svg") %>% 
+              e_radar(Avg, max = 50) %>% 
+              e_radar(Input, max = 50) %>% 
+              e_title("Brain RNA-Seq in Mice", subtext = "Proportion of Gene Expression values Per Cell Type") %>%
+              e_tooltip() %>% 
+              e_toolbox() %>%
+              e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+              e_legend(left = "left", top = "middle", orient = "vertical")
+
+```
+
+```{r, eval=params$brainrnaseq, include=params$brainrnaseq, echo=FALSE}
+
+bs_res_mice %>% select(HGNC_Symbol, CellType, FPKM) %>% 
+  pivot_wider(names_from = CellType, values_from = FPKM) %>% 
+  reactable(searchable = TRUE,
+          striped = TRUE,
+          bordered = TRUE,
+          filterable = TRUE, 
+          defaultColDef = colDef(
+                       headerStyle = list(fontSize = '10px', align = "center")
+          )
+  )
+
+download_this(bs_res_mice %>% select(HGNC_Symbol, CellType, FPKM) %>% 
+  pivot_wider(names_from = CellType, values_from = FPKM),
+    output_name = "brainseq_mouse",
+    output_extension = ".xlsx",
+    button_label = "Download Table",
+    button_type = "default",
+    has_icon = TRUE,
+    icon = "fa fa-save"
+  )
+       
+          
+```
+
+
+```{r, eval=params$ilincs, include=params$ilincs, echo=FALSE}
+
+ilincs_info_html
+
+h2("KD and OE Signatures")
+
+```
+
+```{r, eval=params$ilincs, include=params$ilincs}
+
+lnc_res <- ks_ilincs(genes = genes, knockdown = T, overexpression = T) 
+
+
+if(!is.null(lnc_res)) {            
+  lnc_res %>% 
+    count(Gene, Type) %>% 
+    group_by(Type) %>% 
+    arrange(Type,n) %>% 
+    e_charts(Gene, reorder = F, renderer="svg") %>% 
+    e_bar(n, position = "right") %>% 
+    e_flip_coords() %>% 
+    e_title("iLINCS Signatures", subtext = "Number of gene knockdown or over expression signatures") %>% 
+    e_toolbox() %>%
+    e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+    e_tooltip()
+}
+
+h2("Cell Type")
+
+if(!is.null(lnc_res)) {            
+  lnc_res %>% 
+    group_by(Type) %>% 
+    mutate(
+      Tissue = ifelse(is.na(Tissue), "NA", Tissue),
+      Tissue = forcats::fct_lump(Tissue, 5)) %>% 
+    count(Tissue) %>% 
+    e_charts(Tissue, timeline = TRUE, renderer="svg") %>% 
+    e_pie(n, roseType = "radius") %>% 
+    e_labels() %>% 
+    e_title("iLINCS Signatures", 
+            subtext = "Number of signatures per tissue type (derived from cell line) - Showing only top 5, and the rest grouped under 'Other") %>% 
+    e_toolbox() %>%
+    e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+    e_tooltip()
+}
+```
+
+```{r, eval=params$ilincs, include=params$ilincs, echo=FALSE}
+h2("Table")
+
+if(!is.null(lnc_res)) {
+  reactable(lnc_res, 
+          searchable = TRUE,
+          striped = TRUE,
+          bordered = TRUE,
+          filterable = TRUE,
+          columns = list(
+            Link = colDef(
+              cell = function(value) {
+                htmltools::tags$a(href = value, target = "_blank", "Link")
+              },
+              style = list(color = "blue")
+              ),
+            
+            Type = colDef(cell = function(value) {
+              class <- paste0("tag status-", tolower(gsub(" ", "", value)))
+              div(class = class, value)
+            })
+            
+            )
+          )
+
+}
+
+download_this(lnc_res,
+    output_name = "iLINCS",
+    output_extension = ".xlsx",
+    button_label = "Download Table",
+    button_type = "default",
+    has_icon = TRUE,
+    icon = "fa fa-save"
+  )
+     
+
+
+```
+
+```{r, eval=params$gwas, include=params$gwas, echo=FALSE}
+
+gwas_info_html
+
+
+#knitr::include_graphics("gwas.jpeg")
+
+res <- ks_gwas(genes, my_db)
+
+reactable(select(res, -Sample_Size), 
+          searchable = TRUE,
+          striped = TRUE,
+          bordered = TRUE,
+          
+          columns = list(
+            Link = colDef(
+              cell = function(value) {
+                htmltools::tags$a(href = paste0("https://", value), target = "_blank", "Link")
+              },
+              style = list(color = "blue")
+            )
+          ),
+          
+          details = function(index) {
+            paste(res$Sample_Size[[index]])
+          }
+          )
+
+download_this(select(res, -Sample_Size),
+    output_name = "GWAS",
+    output_extension = ".xlsx",
+    button_label = "Download Table",
+    button_type = "default",
+    has_icon = TRUE,
+    icon = "fa fa-save"
+  )
+```
+
+```{r, eval=params$gwas, include=params$gwas}
+
+#res <- ks_gwas(genes, my_db)
+
+res %>% 
+  count(Trait, sort = T) %>% 
+  head(10) %>% 
+  arrange(n) -> res_procssed
+          
+  top_traits <- pull(res_procssed, Trait) %>% unique()
+
+res %>% 
+  filter(Trait %in% top_traits) %>% 
+  select(Gene, Type) %>% 
+  group_by(Gene, Type) %>% 
+  add_tally() %>% ungroup() %>% 
+  rename(Target = Type, Source = Gene ) -> gw_test1
+          
+res %>% 
+  filter(Trait %in% top_traits) %>% 
+  select(Type, Trait) %>% 
+  group_by(Type, Trait) %>% 
+  add_tally() %>% ungroup() %>% 
+  rename(Target = Trait,
+         Source = Type) -> gw_test2
+          
+res %>% 
+  filter(Trait %in% top_traits) %>% 
+  select(Gene, Trait) %>% 
+  group_by(Gene, Trait) %>% 
+  add_tally() %>% ungroup() %>% 
+  rename(Target = Trait, Source = Gene ) -> gw_test3
+          
+          
+res_procssed %>% 
+  e_charts(Trait, renderer="svg") %>% 
+  e_bar(n, legend = F) %>% 
+  e_title("Number of Associated SNPs", subtext = "Only showing top 10 associated traits") %>% 
+  e_flip_coords() %>% 
+  e_grid(
+    left = 200, # pixels
+    top = "15%" # percentage = responsive
+  ) %>% 
+  e_y_axis(axisLabel = list(fontSize = 9)) %>% 
+  e_mark_point("n", data = list(name = "Max",type = "max"), itemStyle = list(color = "red")) %>% 
+  e_toolbox() %>%
+  e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+  e_tooltip()
+  
+res %>% 
+  filter(Trait %in% top_traits) %>% 
+  mutate(
+    Type = ifelse(is.na(Type), "NA", Type),
+    Type = forcats::fct_lump(Type, 5)
+  ) %>% 
+  count(Type) %>% 
+  e_charts(Type,renderer="svg") %>% 
+  e_pie(n, roseType = "radius") %>% 
+  e_labels() %>% 
+  e_title("SNPs Types", subtext = "Only showing top 10 associated traits") %>% 
+  e_toolbox() %>%
+  e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+  e_tooltip()
+  
+rbind(gw_test1, gw_test2) %>% 
+  e_charts(renderer="svg") %>% 
+  e_sankey(Source, Target, n) %>% 
+  e_toolbox() %>%
+  e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+  e_tooltip()
+  
+  
+gw_test3 %>% 
+  e_charts(renderer="svg") %>% 
+  e_sankey(Source, Target, n) %>% 
+  e_toolbox() %>%
+  e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+  e_tooltip()
+
+
+```
+
+```{r, eval=params$braincloud, include=params$braincloud, echo=FALSE}
+
+braincloud_info_html
+
+```
+
+```{r, eval=params$braincloud, include=params$braincloud}
+bs_res <- ks_braincloud(genes = genes, db = my_db)
+
+
+if(!is.null(bs_res)) {
+          
+  bs_res <- group_by(bs_res, GeneSymbol)
+          
+  plot_bc(bs_res, c("Fetal", "Infant", "Child", "Adult"), 
+          "Human Lifespan", "", T,
+          min = -0.5, max = 80, splitNumber = 20) %>% 
+  e_datazoom() %>% 
+  e_tooltip() %>% 
+  e_toolbox() %>%
+  e_toolbox_feature(feature = c("saveAsImage", "dataView"))
+}
+          
+          
+if(!is.null(bs_res)) {        
+  plot_bc(bs_res, "Fetal", "Fetal", "", T, min = -0.5, max = -0.375) %>% 
+    e_tooltip() %>% 
+    e_toolbox() %>%
+    e_toolbox_feature(feature = c("saveAsImage", "dataView"))
+}         
+          
+if(!is.null(bs_res)) {         
+  plot_bc(bs_res, "Infant", "Infant", "", T, min = 0, max = 0.55) %>% 
+    e_tooltip() %>% 
+    e_toolbox() %>%
+    e_toolbox_feature(feature = c("saveAsImage", "dataView"))
+}
+          
+if(!is.null(bs_res)) {     
+  plot_bc(bs_res, "Child", "Child", "", T, min = 1, max = 18) %>% 
+    e_tooltip() %>% e_toolbox() %>%
+    e_toolbox_feature(feature = c("saveAsImage", "dataView"))
+}       
+ 
+if(!is.null(bs_res)) {         
+  plot_bc(bs_res, "Adult", "Adult", "", T, min = 18, max = 80) %>% 
+    e_tooltip() %>% 
+    e_toolbox_feature(feature = c("saveAsImage", "dataView"))
+}
+          
+
+
+```
+
+
+```{r, eval=params$string, include=params$string, echo=FALSE}
+
+string_info_html
+
+```
+
+
+```{r, eval=params$string, include=params$string}
+string_output <- ks_string(process_gene_input(genes[1], type = "single"), score = 500, nodes = 25)
+
+
+if(!is.null(string_output)) {
+        
+  plot.new()
+  rasterImage(string_output$image,0,0,1,1)
+}
+
+```
+
+```{r, eval=params$string, include=params$string, echo=FALSE}
+
+if(!is.null(string_output)) {
+  reactable(select(string_output$table, -Description) %>% 
+              mutate_if(is.numeric, convert_na), 
+            searchable = TRUE,
+            striped = TRUE,
+            bordered = TRUE,
+            defaultColDef = colDef(
+              #width = 75,
+              align = "center",
+              #headerStyle = list(fontSize = '7.5px', align = "center"),
+              cell = function(value) {
+                color <- rating_color(value)
+                value <- ""
+                div(class = "spi-rating", style = list(background = color), value)
+              }
+            ),
+            
+            columns = list(
+              Protein = colDef(
+                cell = function(value) {
+                  value = value
+                }
+              )), 
+            
+            details = function(index) {
+              paste(string_output$table$Description[[index]])
+            }
+  )
+
+}
+
+if(!is.null(string_output)) {
+download_this(string_output$table %>% mutate_if(is.numeric, convert_na),
+    output_name = "STRING",
+    output_extension = ".xlsx",
+    button_label = "Download Table",
+    button_type = "default",
+    has_icon = TRUE,
+    icon = "fa fa-save"
+  )
+}
+
+```
+
+
+```{r, eval=params$brainatlas, include=params$brainatlas, echo=FALSE}
+
+brainatlas_info_html
+
+```
+
+```{r, eval=params$brainatlas, include=params$brainatlas}
+
+ba_res <- ks_brainatlas(genes = genes, db = my_db)
+
+if(!is.null(ba_res)) {
+         
+  ba_res %>% 
+    {if(T)  mutate(.,CPM_mean = log_transfomed(CPM_mean))  else .} %>% 
+    group_by(CellType) %>% 
+    e_charts(renderer="svg") %>% 
+    e_boxplot(CPM_mean) %>% 
+    e_toolbox() %>%
+    e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+    e_tooltip() %>% 
+    e_show_loading(color = "black")
+}
+
+          
+if(!is.null(ba_res)) {
+  ba_res %>% 
+    {if(T)  mutate(.,CPM_mean = log_transfomed(CPM_mean))  else .} %>% 
+    group_by(gene) %>% 
+    e_charts(x = CellType,renderer="svg", timeline = T) %>% 
+    e_bar(CPM_mean, legend = F) %>% 
+    e_toolbox() %>%
+    e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+    e_tooltip()  %>% 
+    e_show_loading(color = "black")
+}
+
+          
+
+if(!is.null(ba_res)) {            
+  ba_res %>% 
+    {if(T)  mutate(.,CPM_mean = log_transfomed(CPM_mean))  else .} %>% 
+    {if(length(genes) == 1) {
+      arrange(.,desc(CPM_mean)) %>% 
+        group_by(CellType) %>% 
+        e_chart(.,cluster,renderer="svg", reorder = F) %>% 
+        e_bar(e = .,CPM_mean, stack = "grp", legend = T) %>% 
+        e_legend(selectedMode = F)
+    } else {
+      group_by(.,cluster) %>% 
+        arrange(.,cluster, desc(CPM_mean)) %>%
+        e_chart(.,renderer="svg", reorder = F) %>% 
+        e_boxplot(e = .,CPM_mean, outlier = F)
+    } } %>% 
+    e_x_axis(type = 'category', 
+             axisLabel = list(interval=0, rotate = 45, fontSize = 6)) %>% 
+    e_toolbox() %>%
+    e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+    e_tooltip()  %>% 
+    e_show_loading(color = "black")
+}
+
+          
+
+            
+            
+            
+if(!is.null(ba_res)) {           
+  ba_res %>% select(-CellType) %>% 
+    {if(T)  mutate(.,CPM_mean = log_transfomed(CPM_mean))  else .} %>% 
+    pivot_wider(names_from = cluster, values_from = CPM_mean) %>% 
+    column_to_rownames("gene") -> mm
+  
+  mm <- mm[apply(mm, 1, var) != 0, ] 
+  
+  
+  heatmaply::heatmaply(
+    mm, scale = ifelse(T, "row", "none"), 
+    fontsize_col = 5,
+    fontsize_row = 5,
+    Rowv = ifelse(length(ba_res$gene %>% unique()) > 1, T, F )
+    
+  )
+}
+
+if(!is.null(ba_res)) {    
+  ba_res %>% 
+    group_by(CellType) %>% 
+    summarise(FPKM = mean(CPM_mean)) %>% 
+    mutate(total = sum(FPKM), mean_prob = (FPKM/total)*100, 
+           Avg = "Input") %>% 
+    select(CellType, mean_prob, Avg) %>% 
+    rbind(ba_all_human_avg) %>% select(CellType, Avg, mean_prob) %>% 
+    mutate_if(is.numeric, round, 2) %>% 
+    pivot_wider(names_from = Avg, values_from = mean_prob) %>% 
+    e_charts(CellType, renderer="svg") %>% 
+    e_radar(Avg, max = 50) %>% 
+    e_radar(Input, max = 50) %>% 
+    e_title("BrainAtlas", subtext = "Proportion of Gene Expression values Per Cell Type") %>%
+    e_tooltip() %>% 
+    e_toolbox() %>%
+    e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+    e_legend(bottom = 0) %>% 
+    e_show_loading(color = "black")
+}
+```
+
+
+```{r, eval=params$brainatlas, include=params$brainatlas, echo=FALSE}
+
+if(!is.null(ba_res)) {           
+            reactable(ba_res,
+                      searchable = TRUE,
+                      striped = TRUE,
+                      bordered = TRUE,
+                      filterable = TRUE
+            )
+}
+
+if(!is.null(ba_res)) { 
+  download_this(ba_res,
+    output_name = "BrainAtlas",
+    output_extension = ".xlsx",
+    button_label = "Download Table",
+    button_type = "default",
+    has_icon = TRUE,
+    icon = "fa fa-save"
+  )
+}
+
+```
+
+```{r, eval=params$gtex, include=params$gtex, echo=FALSE}
+
+gtex_info_html
+
+```
+
+```{r, eval=params$gtex, include=params$gtex}
+gtex_res <- ks_gtex(genes = genes, db = my_db) 
+
+
+if(!is.null(gtex_res)) {
+          
+  gtex_res %>% 
+    pivot_longer(2:ncol(.), names_to = "Tissue", values_to = "TPM") -> gtex_res_processed
+
+gtex_res_processed %>% 
+  #{if(input$switch3) filter(.,Tissue %in% brain_tissues) else . } %>% 
+  {if(T)  mutate(.,TPM = log_transfomed(TPM))  else .} %>% 
+  {if(length(genes) == 1) {
+    arrange(.,desc(TPM)) %>% 
+      #group_by(Group) %>% 
+      e_chart(.,Tissue,renderer="svg", reorder = F) %>% 
+      e_bar(e = .,TPM, stack = "grp", legend = F)
+  } else {
+    group_by(.,Tissue) %>% 
+      arrange(.,Tissue, desc(TPM)) %>%
+      e_chart(.,renderer="svg", reorder = F) %>% 
+      e_boxplot(e = .,TPM, outlier = F)} } %>% 
+  e_x_axis(type = 'category', 
+                    axisLabel = list(interval=0, rotate = 45, fontSize = 6)) %>% 
+  e_title("GTEx Gene Expression", 
+          subtext = ifelse(T, 
+                           "Median Gene Expression, log10(TPM + 1), Across Different Tissues in Healthy Human", 
+                           "Median Gene Expression (TPM) Across Different Tissues in Healthy Human")) %>% 
+  e_toolbox() %>%
+  e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+  e_tooltip()  %>% 
+  e_show_loading(color = "black")
+}
+          
+if(!is.null(gtex_res)) {
+  gtex_res %>% 
+  column_to_rownames("gene") %>% 
+    {if(T)  mutate_if(.,is.numeric, log_transfomed)  else .} -> mm
+    #{if(input$switch3) select(., one_of(brain_tissues)) else .} -> mm
+    
+  mm <- mm[apply(mm, 1, var) != 0, ] 
+    
+  heatmaply::heatmaply(
+    mm, scale = ifelse(T, "row", "none"), 
+    fontsize_col = 5,
+    fontsize_row = 5,
+    Rowv = ifelse(length(gtex_res$gene) > 1, T, F )
+    )
+}
+```
+
+```{r, eval=params$gtex, include=params$gtex, echo=FALSE}
+if(!is.null(gtex_res)) {    
+  reactable(
+    gtex_res_processed %>% 
+      {if(T)  mutate(.,TPM = log_transfomed(TPM))  else .},
+      #{if(input$switch3) filter(.,Tissue %in% brain_tissues) else . },
+    searchable = TRUE,
+    striped = TRUE,
+    bordered = TRUE,
+    filterable = TRUE
+              )
+}
+
+if(!is.null(gtex_res)) { 
+  download_this(mutate(gtex_res_processed, TPM = log_transfomed(TPM)),
+    output_name = "GTEx",
+    output_extension = ".xlsx",
+    button_label = "Download Table",
+    button_type = "default",
+    has_icon = TRUE,
+    icon = "fa fa-save"
+  )
+}
+
+```
+
