@@ -12,6 +12,7 @@ shinyUI(
                             use_bs_tooltip(),
                             useShinydashboard(),
                             use_waiter(),
+                            #use_hostess(),
                             rclipboard::rclipboardSetup(),
                             # waiter_on_busy(
                             #   html = spin_loaders(36, color = "black"),
@@ -77,7 +78,7 @@ shinyUI(
                                        tabPanel("GWAS", icon = icon("", class = "icon-map"),
                                                 gwascatalog_UI("gwascatalogTab")
                                                 ),
-                                       tabPanel("Report", icon = icon("", class = "file-contract"),
+                                       tabPanel("Report", icon = icon("", class = "icon-browser"),
                                                 report_ui("reportTab")
                                        )
 

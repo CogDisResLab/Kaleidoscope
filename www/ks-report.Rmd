@@ -95,7 +95,7 @@ bs_res_mice <- filter(bs_res, Species == "Mice")
 bs_multi_genes_flag <- F
 bs_multi_genes_flag <- any(c(length(unique(bs_res_human$HGNC_Symbol)), length(unique(bs_res_mice$HGNC_Symbol))) > 1)
           
-
+if(nrow(bs_res) > 0) {
 bs_res_human %>% 
   group_by(HGNC_Symbol) %>%
   e_charts(CellType, timeline = ifelse(bs_multi_genes_flag, T, F), renderer="svg") %>%
@@ -113,7 +113,7 @@ bs_res_human %>%
   e_tooltip() %>% 
   e_toolbox() %>%
   e_toolbox_feature(feature = c("saveAsImage", "dataView"))
-
+}
 
 if(bs_multi_genes_flag) {
 bs_res_human %>% 
@@ -134,6 +134,7 @@ bs_res_human %>%
   
 }
 
+if(nrow(bs_res) > 0) {
 bs_res_human %>% 
     group_by(CellType) %>% 
     summarise(FPKM = mean(FPKM)) %>% 
@@ -150,7 +151,7 @@ bs_res_human %>%
     e_toolbox() %>%
     e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
     e_legend(left = "left", top = "middle", orient = "vertical")
-
+}
 
 ```
 
@@ -180,6 +181,7 @@ h2("Mouse")
 ```
 
 ```{r, eval=params$brainrnaseq, include=params$brainrnaseq}
+if(nrow(bs_res) > 0) {
 bs_res_mice %>% 
   group_by(HGNC_Symbol) %>%
   e_charts(CellType, timeline = ifelse(bs_multi_genes_flag, T, F), renderer="svg") %>%
@@ -197,6 +199,7 @@ bs_res_mice %>%
   e_tooltip() %>% 
   e_toolbox() %>%
   e_toolbox_feature(feature = c("saveAsImage", "dataView"))
+}
 
 if(bs_multi_genes_flag) {
 bs_res_mice %>% 
@@ -218,7 +221,7 @@ bs_res_mice %>%
      
 }
 
-
+if(nrow(bs_res) > 0) {
 bs_res_mice %>% 
               group_by(CellType) %>% 
               summarise(FPKM = sum(FPKM)) %>% 
@@ -235,11 +238,12 @@ bs_res_mice %>%
               e_toolbox() %>%
               e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
               e_legend(left = "left", top = "middle", orient = "vertical")
-
+}
 ```
 
 ```{r, eval=params$brainrnaseq, include=params$brainrnaseq, echo=FALSE}
 
+if(nrow(bs_res) > 0) {
 bs_res_mice %>% select(HGNC_Symbol, CellType, FPKM) %>% 
   pivot_wider(names_from = CellType, values_from = FPKM) %>% 
   reactable(searchable = TRUE,
@@ -260,7 +264,7 @@ download_this(bs_res_mice %>% select(HGNC_Symbol, CellType, FPKM) %>%
     has_icon = TRUE,
     icon = "fa fa-save"
   )
-       
+}      
           
 ```
 
@@ -339,6 +343,7 @@ if(!is.null(lnc_res)) {
 
 }
 
+if(!is.null(lnc_res)) {
 download_this(lnc_res,
     output_name = "iLINCS",
     output_extension = ".xlsx",
@@ -347,7 +352,8 @@ download_this(lnc_res,
     has_icon = TRUE,
     icon = "fa fa-save"
   )
-     
+   
+}  
 
 
 ```
@@ -361,6 +367,7 @@ gwas_info_html
 
 res <- ks_gwas(genes, my_db)
 
+if(!is.null(res)) {
 reactable(select(res, -Sample_Size), 
           searchable = TRUE,
           striped = TRUE,
@@ -380,6 +387,7 @@ reactable(select(res, -Sample_Size),
           }
           )
 
+
 download_this(select(res, -Sample_Size),
     output_name = "GWAS",
     output_extension = ".xlsx",
@@ -388,26 +396,31 @@ download_this(select(res, -Sample_Size),
     has_icon = TRUE,
     icon = "fa fa-save"
   )
+}
 ```
 
 ```{r, eval=params$gwas, include=params$gwas}
 
 #res <- ks_gwas(genes, my_db)
-
+if(!is.null(res)) {
 res %>% 
   count(Trait, sort = T) %>% 
   head(10) %>% 
   arrange(n) -> res_procssed
           
   top_traits <- pull(res_procssed, Trait) %>% unique()
+}
 
+if(!is.null(res)) {
 res %>% 
   filter(Trait %in% top_traits) %>% 
   select(Gene, Type) %>% 
   group_by(Gene, Type) %>% 
   add_tally() %>% ungroup() %>% 
   rename(Target = Type, Source = Gene ) -> gw_test1
-          
+}
+
+if(!is.null(res)) {          
 res %>% 
   filter(Trait %in% top_traits) %>% 
   select(Type, Trait) %>% 
@@ -415,15 +428,18 @@ res %>%
   add_tally() %>% ungroup() %>% 
   rename(Target = Trait,
          Source = Type) -> gw_test2
-          
+}
+
+if(!is.null(res)) {          
 res %>% 
   filter(Trait %in% top_traits) %>% 
   select(Gene, Trait) %>% 
   group_by(Gene, Trait) %>% 
   add_tally() %>% ungroup() %>% 
   rename(Target = Trait, Source = Gene ) -> gw_test3
+}
           
-          
+if(!is.null(res)) {          
 res_procssed %>% 
   e_charts(Trait, renderer="svg") %>% 
   e_bar(n, legend = F) %>% 
@@ -438,7 +454,9 @@ res_procssed %>%
   e_toolbox() %>%
   e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
   e_tooltip()
-  
+}
+ 
+if(!is.null(res)) { 
 res %>% 
   filter(Trait %in% top_traits) %>% 
   mutate(
@@ -453,21 +471,25 @@ res %>%
   e_toolbox() %>%
   e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
   e_tooltip()
-  
+}
+ 
+if(!is.null(res)) { 
 rbind(gw_test1, gw_test2) %>% 
   e_charts(renderer="svg") %>% 
   e_sankey(Source, Target, n) %>% 
   e_toolbox() %>%
   e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
   e_tooltip()
+}
   
-  
+ if(!is.null(res)) { 
 gw_test3 %>% 
   e_charts(renderer="svg") %>% 
   e_sankey(Source, Target, n) %>% 
   e_toolbox() %>%
   e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
   e_tooltip()
+ }
 
 
 ```
@@ -479,7 +501,7 @@ braincloud_info_html
 ```
 
 ```{r, eval=params$braincloud, include=params$braincloud}
-bs_res <- ks_braincloud(genes = genes, db = my_db)
+bs_res <- ks_braincloud(genes = head(genes, 5), db = my_db)
 
 
 if(!is.null(bs_res)) {
@@ -531,11 +553,14 @@ if(!is.null(bs_res)) {
 
 string_info_html
 
+HTML("Note: only the first gene from your input list is used for the STRING database")
+
 ```
 
 
 ```{r, eval=params$string, include=params$string}
-string_output <- ks_string(process_gene_input(genes[1], type = "single"), score = 500, nodes = 25)
+
+string_output <- ks_string(head(genes, 1), score = 500, nodes = 25)
 
 
 if(!is.null(string_output)) {

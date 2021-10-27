@@ -6,7 +6,7 @@ gtex_ui <- function(id) {
   
   tagList(
     fluidRow(
-      column(width = 12,  geneInputUI(ns("genes"))),hr(),
+      column(width = 12,  geneInputUI(ns("genes")),hr()),
       column(width = 12, echarts4rOutput(ns("plot1"), height = "500"))
       ),
       hr(),

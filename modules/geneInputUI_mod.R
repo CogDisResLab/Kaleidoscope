@@ -1,6 +1,6 @@
 # Gene Text Input Module UI function
 
-geneInputUI <- function(id, label = "Enter gene target(s) (HGNC Symbols) separated by comma", placeholder = "e.g. AKT1, NRXN1") {
+geneInputUI <- function(id, label = "Enter gene target(s) (HGNC Symbols) separated by commas", placeholder = "e.g. AKT1, NRXN1") {
 
   ns <- NS(id)
   

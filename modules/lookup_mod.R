@@ -3,7 +3,7 @@ lookup_ui <- function(id) {
 
   tagList(
     fluidRow(
-      column(width = 12,  geneInputUI(ns("genes"))), hr(),
+      column(width = 12,  geneInputUI(ns("genes")),hr()), 
       shinydashboard::box(status = "info", width = 12,
       column(width = 3,
              pickerInput(inputId=ns("dbs1"),label="Schizophrenia",choices="",multiple = TRUE,options = list(`actions-box` = TRUE, `selected-text-format` = "count > 1")),

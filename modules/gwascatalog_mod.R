@@ -6,7 +6,7 @@ gwascatalog_UI <- function(id) {
   
   tagList(
     fluidRow(
-      column(width = 12,  geneInputUI(ns("genes"))),hr(),
+      column(width = 12,  geneInputUI(ns("genes")),hr()),
       column(width = 6, echarts4rOutput(ns("plot1"), height = "500")),
       column(width = 6, echarts4rOutput(ns("plot2"), height = "500")),
       column(width = 6, echarts4rOutput(ns("plot3"), height = "500")),
