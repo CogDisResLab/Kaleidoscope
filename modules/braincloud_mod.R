@@ -9,7 +9,7 @@ braincloud_ui <- function(id) {
   
   tagList(
     fluidRow(
-      column(width = 4,
+      column(width = 12,
              geneInputUI(ns("genes"))
              )
 

@@ -3,6 +3,8 @@
 
 string_ui <- function(id) {
   
+  
+  
   ns <- NS(id)
   
   sting_md <-
@@ -15,11 +17,12 @@ string_ui <- function(id) {
   
   tagList(
     fluidRow(
-      column(width = 4,
-             geneInputUI(ns("genes"), label = "Enter a single gene or protein target (HGNC Symbol)", placeholder = "e.g. NRXN1")
+      tags$head(tags$script(src="string_embedded_network_v2.0.2.js")),
+      column(width = 6,
+             geneInputUI(ns("genes"), label = "Enter gene target(s) (HGNC Symbols) separated by commas", placeholder = "e.g. NRXN1")
               
              ),
-      column(width = 4, 
+      column(width = 3, 
              sliderInput(ns("node_slider"), label = "Nodes", min = 1,
                          max = 100, value = 20, step = 1) %>% 
                shinyInput_label_embed(
@@ -31,7 +34,7 @@ string_ui <- function(id) {
                )
              
              ),
-      column(width = 4, 
+      column(width = 3, 
              sliderInput(ns("score_slider"), label = "Score", min = 0,
                          max = 999, value = 500, step = 10) %>% 
                shinyInput_label_embed(
@@ -44,20 +47,26 @@ string_ui <- function(id) {
       )
              ),hr(),
     fluidRow(
-      column(width = 6,
-             plotOutput(ns("string_img"), height = "700px"), 
-             shinyjs::hidden(div(id = ns("string_info"),
-                                 img(src = "stringInfo.png", width = "100%", hight = "500px")))
+      column(width = 12,
+             div(
+             plotOutput("stringEmbedded", height = "auto", width = "auto"),
+             style="text-align: center;"
+             )
              ),
-      column(width = 6,
+      column(width = 4,
+             shinyjs::hidden(div(id = ns("string_info"),
+                                 img(src = "stringInfo.png", width = "100%", hight = "250px", style="padding-top: 5px;")))
+             #enrichr_ui(ns("en_btn"))
+             #shinyjs::hidden(actionButton(ns("trnsNet"), "Copy")),
+             #actionButton(ns("enrichrBtn1"), "Enrichr", icon = icon("dna"))
+             
+      ),
+      column(width = 8,
              reactableOutput(ns("table")),
              verbatimTextOutput(ns("interactors_genes")),
              #uiOutput(ns("clip")),
              hidden(actionButton(ns("enrichr_btn"), "Submit to Enrichr")),
              div(id = ns("dn_btn_div"), download_btn_ui(ns("dn_btn")))
-             #enrichr_ui(ns("en_btn"))
-             #shinyjs::hidden(actionButton(ns("trnsNet"), "Copy")),
-             #actionButton(ns("enrichrBtn1"), "Enrichr", icon = icon("dna"))
              
       )
             
@@ -76,7 +85,7 @@ string_server <- function(id) {
     function(input, output, session) {
       
       ns <- session$ns
-      w <- Waiter$new(ns(c("string_img")), 
+      w <- Waiter$new(c("stringEmbedded"), 
                       html = spin_loaders(37, color = "black"), 
                       color = transparent(.5)
       )
@@ -93,7 +102,7 @@ string_server <- function(id) {
         
         w$show()
         
-        shinyjs::hide("string_img")
+        shinyjs::hide("stringEmbedded")
         shinyjs::hide("table")
         shinyjs::hide("interactors_genes")
         shinyjs::hide("string_info")
@@ -103,17 +112,60 @@ string_server <- function(id) {
         
         #req(genes_ids$genes())
         
+        genes <- process_gene_input(genes_ids$genes())
+        
          string_output <- withProgress(message = "connecting to STRING ...", {
-           ks_string(process_gene_input(genes_ids$genes(), type = "single"),score = input$score_slider, nodes = input$node_slider)
+           
+           if(length(genes)>1) {
+             ks_string(genes,score = input$score_slider, nodes = input$node_slider, multi = T, get_img = F)
+           }
+           
+           else {
+             ks_string(genes,score = input$score_slider, nodes = input$node_slider, get_img = F)
+           }
+           
+           
            })
          
          if(!is.null(string_output)) {
-         
-         output$string_img <- renderPlot({
-           plot.new()
-           rasterImage(string_output$image,0,0,1,1)
-           })
-         shinyjs::show("string_img") 
+           
+           print(length(genes))
+           
+           if(length(genes) == 1) {
+             str_params <- list(
+               species = "9606",
+               identifiers = c(genes),
+               network_flavor = "evidence",
+               caller_identity = 'https://cdrl-ut.org/',
+               add_white_nodes = input$node_slider,
+               required_score = input$score_slider,
+               single_par = T
+
+             )
+             session$sendCustomMessage("string_input", str_params)
+           } 
+           
+           else {
+             str_params <- list(
+               species = "9606",
+               identifiers = string_output$genes,
+               network_flavor = "evidence",
+               caller_identity = 'https://cdrl-ut.org/',
+               single_par = F
+             )
+             
+
+             session$sendCustomMessage("string_input", str_params)
+           }
+           
+           
+           
+           
+           
+           #session$sendCustomMessage("string_input", str_params)
+           
+           
+         shinyjs::show("stringEmbedded") 
          shinyjs::show("string_info")  
 
          output$interactors_genes <- renderText(paste(string_output$genes, collapse = ","))
@@ -129,6 +181,7 @@ string_server <- function(id) {
                      defaultColDef = colDef(
                        #width = 75,
                        align = "center",
+                       html = T,
                        #headerStyle = list(fontSize = '7.5px', align = "center"),
                        cell = function(value) {
                          color <- rating_color(value)
@@ -139,6 +192,8 @@ string_server <- function(id) {
                      
                      columns = list(
                        Protein = colDef(
+                         name = if(length(genes)>1) {"Interaction"} else {"Protein"},
+                         width = if(length(genes)>1) {150} else {75},
                          cell = function(value) {
                            value = value
                          }
@@ -147,7 +202,7 @@ string_server <- function(id) {
                      ), 
                      
                      details = function(index) {
-                       paste(string_output$table$Description[[index]])
+                       string_output$table$Description[[index]]
                      }
            )
            
@@ -157,7 +212,7 @@ string_server <- function(id) {
          onclick("enrichr_btn", runjs(paste0("window.open('",enrichrLink,"')")))
          
          download_btn_server(id = "dn_btn", 
-                             tbl = string_output$table %>% 
+                             tbl = string_output$table %>% select(-Description) %>% 
                                mutate_if(is.numeric, convert_na),
                              name = "STRING_Table")
          
@@ -193,28 +248,23 @@ string_server <- function(id) {
 
 
 
-ks_string <- function(gene, score, nodes, get_img = T, high_res = F) {
+ks_string <- function(gene, score, nodes, get_img = T, high_res = F, multi = F) {
   
   
-  # get network image
-  if (get_img == T) {
-    img_api_url <- paste0("http://version-11-0.string-db.org/api/",ifelse(high_res, "highres_image", "image"),"/network?identifier=", gene, 
-                  "&required_score=",score,"&limit=",nodes,
-                  "&species=9606&network_flavor=evidence")
-    
-    img_res <- httr::GET(img_api_url)
-    
-    if(img_res$status_code == 200) {
-      img_plot <- httr::content(img_res)
-      
-    }
+  # get interactors 
+  if(multi) {
+    api_url <- paste0("http://version-11-0.string-db.org/api/json/network?identifiers=",
+                      paste0(gene, collapse = "%0d"),"&species=9606&required_score=",
+                      score)
     
   }
   
-  # get interactors 
-  api_url <- paste0("http://version-11-0.string-db.org/api/json/interaction_partners?identifiers=",
-                    gene,"&species=9606&required_score=",
-                    score,"&limit=",nodes)
+  else {
+    api_url <- paste0("http://version-11-0.string-db.org/api/json/interaction_partners?identifiers=",
+                      gene,"&species=9606&required_score=",
+                      score,"&limit=",nodes)
+  }
+  
   
   table_res <- httr::GET(api_url)
   
@@ -225,11 +275,27 @@ ks_string <- function(gene, score, nodes, get_img = T, high_res = F) {
     
     message("got interactors")
     
-    IdList <- c(gene, dplyr::pull(table_string, preferredName_B))
+    #IdList <- c(gene, dplyr::pull(table_string, preferredName_B))
     
-    table_string <- dplyr::add_row(table_string, preferredName_B = gene) %>% 
-      dplyr::select(-preferredName_A, -stringId_A,-stringId_B,-ncbiTaxonId) %>% 
-      dplyr::rename(preferredName = preferredName_B)
+    if(identical(table_string, list())) {
+      IdList <- gene
+    }
+    
+    else {
+      IdList <- c(gene[1], dplyr::pull(table_string, preferredName_B), dplyr::pull(table_string, preferredName_A)) %>% unique()
+      
+      if(multi) {
+        table_string <- dplyr::select(table_string, -stringId_A,-stringId_B,-ncbiTaxonId)
+      } else {
+        table_string <- dplyr::add_row(table_string, preferredName_B = gene) %>% 
+          dplyr::select(-preferredName_A, -stringId_A,-stringId_B,-ncbiTaxonId) %>% 
+          dplyr::rename(preferredName = preferredName_B)
+        
+      }
+    }
+    
+    
+    
     
     
     #  Get gene info
@@ -246,17 +312,55 @@ ks_string <- function(gene, score, nodes, get_img = T, high_res = F) {
       
       table_string_meta <- dplyr::select(table_string_meta,preferredName, annotation)
       
-      interactors <- dplyr::pull(table_string_meta, preferredName)
+      interactors <- IdList
       
-      table_string_meta %>% 
-        dplyr::full_join(table_string) %>% 
-        dplyr::select(preferredName, score, annotation, ends_with("score")) %>% 
-        dplyr::arrange(desc(score)) %>% 
-        dplyr::rename(Protein = preferredName, CombinedScore = score, Description = annotation,Neighborhood = nscore, 
-                      `Gene Fusion` =  fscore, Phylogenetic = pscore, 
-                      Database = dscore, Textmining = tscore, CoExpression = ascore,
-                      Experimental = escore) %>% 
-        dplyr::select(Protein, CombinedScore, Description, Experimental, Database, everything()) -> table_string_final
+      if(identical(table_string, list())) {
+        table_string_meta %>% 
+          dplyr::select(preferredName, annotation) %>% 
+          mutate(score = 0, nscore=0, fscore = 0, pscore = 0, dscore = 0, tscore = 0, ascore= 0, escore = 0) %>% 
+          dplyr::rename(Protein = preferredName, CombinedScore = score, Description = annotation,Neighborhood = nscore, 
+                        `Gene Fusion` =  fscore, Phylogenetic = pscore, 
+                        Database = dscore, Textmining = tscore, CoExpression = ascore,
+                        Experimental = escore) %>% 
+          dplyr::select(Protein, CombinedScore, Description, Experimental, Database, everything()) -> table_string_final
+      }
+      
+      else {
+        if(multi) {
+          left_join(table_string, table_string_meta, 
+                    by = c("preferredName_A" = "preferredName")) %>% 
+            left_join(table_string_meta, by = c("preferredName_B" = "preferredName")) %>% 
+            rowwise() %>% 
+            mutate(annotation = paste(paste0(preferredName_A,": ",annotation.x), paste0(preferredName_B,": ", 
+                                                                                        annotation.y), sep = "<br><br>")) %>% 
+            select(preferredName_A, preferredName_B, score, annotation, ends_with("score")) %>% 
+            dplyr::arrange(desc(score)) %>% 
+            dplyr::rename(Protein_A = preferredName_A, Protein_B = preferredName_B, 
+                          CombinedScore = score, Description = annotation,Neighborhood = nscore, 
+                          `Gene Fusion` =  fscore, Phylogenetic = pscore, 
+                          Database = dscore, Textmining = tscore, CoExpression = ascore,
+                          Experimental = escore) %>% 
+            rowwise() %>% 
+            mutate(Protein = paste0(Protein_A, "---", Protein_B)) %>% 
+            dplyr::select(Protein, CombinedScore, 
+                          Description, Experimental, Database, everything(), -Protein_A, -Protein_B) -> table_string_final
+        }
+        else {
+          table_string_meta %>% 
+            dplyr::full_join(table_string) %>% 
+            dplyr::select(preferredName, score, annotation, ends_with("score")) %>% 
+            dplyr::arrange(desc(score)) %>% 
+            dplyr::rename(Protein = preferredName, CombinedScore = score, Description = annotation,Neighborhood = nscore, 
+                          `Gene Fusion` =  fscore, Phylogenetic = pscore, 
+                          Database = dscore, Textmining = tscore, CoExpression = ascore,
+                          Experimental = escore) %>% 
+            dplyr::select(Protein, CombinedScore, Description, Experimental, Database, everything()) %>% 
+            dplyr::arrange(desc(CombinedScore)) -> table_string_final
+        }
+        
+      }
+      
+      
       
       meta_tag <- T
     }
@@ -265,8 +369,8 @@ ks_string <- function(gene, score, nodes, get_img = T, high_res = F) {
       
       return(list(
         table = table_string_final,
-        genes = interactors,
-        image = img_plot 
+        genes = interactors
+        #image = img_plot 
       ))
     }
     else {

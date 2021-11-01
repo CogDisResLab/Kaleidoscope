@@ -1,0 +1,127 @@
+<head>
+<script src="ks_custom_functions.js"></script>
+</head>
+
+<section class="module" id="services" style="padding: 0">
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-6 col-sm-offset-3">
+				<div class="module-subtitle font-serif">Select Databases and Tools to Be Included in the Report: </div>
+			</div>
+		</div>
+		<div class="row multi-columns-row">
+			<div class="col-md-3 col-sm-6 col-xs-12">
+				<!-- <a href="https://string-db.org/" target="_blank" rel="noopener noreferrer"> -->
+				<div id="string_item" class="features-item">
+					<div class="features-icon"><span class="icon-genius"></span></div>
+					<h3 class="features-title font-alt">STRING</h3>
+					<div class="form-group shiny-input-container">
+						<div class="checkbox">
+							<label>
+								<input id="reportTab-string_par" type="checkbox" checked="checked" 
+								onclick="opacityEdit('reportTab-string_par', 'string_item')" /> <span></span> </label>
+						</div>
+					</div>
+				</div>
+				<!--</a> -->
+			</div>
+			<div class="col-md-3 col-sm-6 col-xs-12">
+				<div id = "gtex_item" class="features-item">
+					<div class="features-icon"><span class="icon-profile-male"></span></div>
+					<h3 class="features-title font-alt">GTEx</h3>
+					<div class="form-group shiny-input-container">
+						<div class="checkbox">
+							<label>
+								<input id="reportTab-gtex_par" type="checkbox" checked="checked" 
+								onclick="opacityEdit('reportTab-gtex_par', 'gtex_item')"
+								/> <span></span> </label>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-3 col-sm-6 col-xs-12">
+				<div id = "braincloud_item" class="features-item">
+					<div class="features-icon"><span class="icon-linegraph"></span></div>
+					<h3 class="features-title font-alt">BrainCloud</h3>
+					<div class="form-group shiny-input-container">
+						<div class="checkbox">
+							<label>
+								<input id="reportTab-braincloud_par" type="checkbox" checked="checked"
+								onclick="opacityEdit('reportTab-braincloud_par', 'braincloud_item')"
+								/> <span></span> </label>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-3 col-sm-6 col-xs-12">
+				<div id="ilincs_item" class="features-item">
+					<div class="features-icon"><span class="icon-lifesaver"></span></div>
+					<h3 class="features-title font-alt">iLINCS</h3>
+					<div class="form-group shiny-input-container">
+						<div class="checkbox">
+							<label>
+								<input id="reportTab-ilincs_par" type="checkbox" checked="checked" 
+								onclick="opacityEdit('reportTab-ilincs_par', 'ilincs_item')"
+								/> <span></span> </label>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-3 col-sm-6 col-xs-12">
+				<div id="brainseq_item" class="features-item">
+					<div class="features-icon"><span class="icon-bargraph"></span></div>
+					<h3 class="features-title font-alt">BRAIN RNA-Seq</h3>
+					<div class="form-group shiny-input-container">
+						<div class="checkbox">
+							<label>
+								<input id="reportTab-brainseq_par" type="checkbox" checked="checked" 
+								onclick="opacityEdit('reportTab-brainseq_par', 'brainseq_item')"
+								/> <span></span> </label>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-3 col-sm-6 col-xs-12">
+				<div id="gwas_item" class="features-item">
+					<div class="features-icon"><span class="icon-map"></span></div>
+					<h3 class="features-title font-alt">GWAS Catalog</h3>
+					<div class="form-group shiny-input-container">
+						<div class="checkbox">
+							<label>
+								<input id="reportTab-gwas_par" type="checkbox" checked="checked"
+								onclick="opacityEdit('reportTab-gwas_par', 'gwas_item')"
+								/> <span></span> </label>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-3 col-sm-6 col-xs-12">
+				<div class="features-item" style="opacity: 0.3">
+					<div class="features-icon"><span class="icon-search"></span></div>
+					<h3 class="features-title font-alt">Lookup</h3>
+					<div class="form-group shiny-input-container">
+						<div class="checkbox">
+							<label>
+								<input id="reportTab-lookup_par" type="checkbox" disabled/> <span></span> </label>
+						</div>
+					</div>
+					<p>not available yet</p>
+				</div>
+			</div>
+			<div class="col-md-3 col-sm-6 col-xs-12">
+				<div id="brainatlas_item" class="features-item">
+					<div class="features-icon"><span class="icon-aperture"></span></div>
+					<h3 class="features-title font-alt">BrainAtlas</h3>
+					<div class="form-group shiny-input-container">
+						<div class="checkbox">
+							<label>
+								<input id="reportTab-brainatlas_par" type="checkbox" checked="checked"
+								onclick="opacityEdit('reportTab-brainatlas_par', 'brainatlas_item')"
+								/> <span></span> </label>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>

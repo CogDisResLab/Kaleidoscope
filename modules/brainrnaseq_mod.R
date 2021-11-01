@@ -90,7 +90,7 @@ brainrnaseq_server <- function(id) {
               ) %>% 
               e_x_axis(name = "log10(FPKM + 1)", 
                        axisLine = list(onZero = F),
-                       nameLocation = "middle", 
+                       nameLocation = "start", 
                        nameGap = 40) %>% 
               e_title("Brain RNA-Seq in Human", subtext = "Gene Expression values (log10(FPKM + 1)) Per Cell Type") %>% 
               e_tooltip() %>% 

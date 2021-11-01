@@ -23,10 +23,21 @@ params:
   
 ---
 
+<script src="string_embedded_network_v2.0.2.js"></script>
+
 ```{r setup, include=FALSE}
+
+
+
+# htmltools::tagList(
+#   htmltools::tags$script(src = "string_embedded_network_v2.0.2.js")
+# )
+
 knitr::opts_chunk$set(echo = TRUE, warning = F, error = F, message = F)
 
 library(downloadthis)
+
+
 ```
 
 ```{css, echo=FALSE}
@@ -61,6 +72,7 @@ library(downloadthis)
   background: hsl(350, 70%, 90%);
   color: hsl(350, 45%, 30%);
 }
+
 
 ```
 
@@ -553,23 +565,77 @@ if(!is.null(bs_res)) {
 
 string_info_html
 
-HTML("Note: only the first gene from your input list is used for the STRING database")
+#HTML("Note: only the first gene from your input list is used for the STRING database")
 
 ```
 
+<div id="stringEmbedded"></div>
 
 ```{r, eval=params$string, include=params$string}
 
-string_output <- ks_string(head(genes, 1), score = 500, nodes = 25)
+
+if(length(genes)>1) {
+  string_output <- ks_string(genes,score = 500, nodes = 20, multi = T, get_img = F)
+  } else {
+    string_output <- ks_string(genes,score = 500, nodes = 20, get_img = F)
+  }
 
 
 if(!is.null(string_output)) {
         
-  plot.new()
-  rasterImage(string_output$image,0,0,1,1)
+  div(id = "stringEmbedded")
+  
+  if(length(genes) == 1) {
+             str_params <- list(
+               species = "9606",
+               identifiers = c(genes),
+               network_flavor = "evidence",
+               caller_identity = 'https://cdrl-ut.org/',
+               add_white_nodes = 20,
+               required_score = 500,
+               single_par = T
+
+             )
+
+             
+             htmltools::tags$script(paste0("var str_params_js = ", jsonlite::toJSON(str_params), ";"))
+             
+           } 
+           
+           else {
+             str_params <- list(
+               species = "9606",
+               identifiers = string_output$genes,
+               network_flavor = "evidence",
+               caller_identity = 'https://cdrl-ut.org/',
+               single_par = F
+             )
+             
+             
+             htmltools::tags$script(paste0("var str_params_js = ", jsonlite::toJSON(str_params), ";"))
+             
+           }
+  
 }
 
 ```
+
+```{js, eval=params$string, include=params$string, echo=FALSE}
+
+
+if(str_params_js["single_par"][0]) {
+  delete str_params_js['single_par'];
+  getSTRING('https://string-db.org', str_params_js, true);
+  } 
+else {
+  delete str_params_js['single_par'];
+  getSTRING('https://string-db.org', str_params_js, false);
+
+  }
+    
+
+```
+
 
 ```{r, eval=params$string, include=params$string, echo=FALSE}
 
@@ -582,6 +648,7 @@ if(!is.null(string_output)) {
             defaultColDef = colDef(
               #width = 75,
               align = "center",
+              html = T,
               #headerStyle = list(fontSize = '7.5px', align = "center"),
               cell = function(value) {
                 color <- rating_color(value)
@@ -592,13 +659,16 @@ if(!is.null(string_output)) {
             
             columns = list(
               Protein = colDef(
-                cell = function(value) {
-                  value = value
-                }
-              )), 
+                         name = if(length(genes)>1) {"Interaction"} else {"Protein"},
+                         width = if(length(genes)>1) {150} else {75},
+                         cell = function(value) {
+                           value = value
+                         }
+                       )
+              ), 
             
             details = function(index) {
-              paste(string_output$table$Description[[index]])
+              string_output$table$Description[[index]]
             }
   )
 
