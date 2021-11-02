@@ -119,8 +119,9 @@ bs_res_human %>%
   ) %>% 
   e_x_axis(name = "log10(FPKM + 1)", 
            axisLine = list(onZero = F),
-           nameLocation = "middle", 
-           nameGap = 40) %>% 
+           nameLocation = "end"
+           #nameGap = 40
+           ) %>% 
   e_title("Brain RNA-Seq in Human", subtext = "Gene Expression values (log10(FPKM + 1)) Per Cell Type") %>% 
   e_tooltip() %>% 
   e_toolbox() %>%
@@ -205,8 +206,9 @@ bs_res_mice %>%
   ) %>% 
   e_x_axis(name = "log10(FPKM + 1)", 
            axisLine = list(onZero = F),
-           nameLocation = "middle", 
-           nameGap = 40) %>% 
+           nameLocation = "end"
+           #nameGap = 40
+           ) %>% 
   e_title("Brain RNA-Seq in Mice", subtext = "Gene Expression values (log10(FPKM + 1)) Per Cell Type") %>% 
   e_tooltip() %>% 
   e_toolbox() %>%
@@ -374,8 +376,9 @@ download_this(lnc_res,
 
 gwas_info_html
 
+```
 
-#knitr::include_graphics("gwas.jpeg")
+```{r, eval=params$gwas, include=params$gwas}
 
 res <- ks_gwas(genes, my_db)
 
@@ -398,7 +401,7 @@ reactable(select(res, -Sample_Size),
             paste(res$Sample_Size[[index]])
           }
           )
-
+}
 
 download_this(select(res, -Sample_Size),
     output_name = "GWAS",
@@ -408,10 +411,8 @@ download_this(select(res, -Sample_Size),
     has_icon = TRUE,
     icon = "fa fa-save"
   )
-}
-```
 
-```{r, eval=params$gwas, include=params$gwas}
+
 
 #res <- ks_gwas(genes, my_db)
 if(!is.null(res)) {
