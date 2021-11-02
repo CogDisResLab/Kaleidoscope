@@ -2,6 +2,7 @@ shinyUI(
   navbarPage(title = "Kaleidoscope",
                    theme = "style.css",
                    id = "tb_sets",
+                   #position = "fixed-top",
                    header = "",
 
                    # Home tab ----
@@ -26,6 +27,7 @@ shinyUI(
                    tabPanel("App", icon = icon("th", lib = "glyphicon"),
                             value = "app",
                             navbarPage(title = "",
+                                       #position = "fixed-top",
                                        
                                        # BrainSeq ----
                                        tabPanel("BrainRNA-Seq",icon = icon("", class = "icon-bargraph", verify_fa = FALSE),

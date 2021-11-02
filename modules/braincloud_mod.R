@@ -10,7 +10,7 @@ braincloud_ui <- function(id) {
   tagList(
     fluidRow(
       column(width = 12,
-             geneInputUI(ns("genes"))
+             geneInputUI(ns("genes"), label = "Enter gene target(s) (HGNC Symbols) separated by commas (5 genes max)")
              )
 
              ),hr(),
@@ -84,7 +84,7 @@ braincloud_server <- function(id) {
         shinyjs::hide("se")
         
         
-        genes <- process_gene_input(genes)
+        genes <- process_gene_input(genes) %>% head(5)
           
         bs_res <- withProgress(message = "connecting to KS Database ...", {
           ks_braincloud(genes = genes, db = my_db) 
