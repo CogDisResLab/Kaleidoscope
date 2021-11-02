@@ -55,7 +55,7 @@ string_ui <- function(id) {
              ),
       column(width = 4,
              shinyjs::hidden(div(id = ns("string_info"),
-                                 img(src = "stringInfo.png", width = "100%", hight = "250px", style="padding-top: 5px;")))
+                                 img(src = "stringInfo.png", width = "100%", hight = "250px", style="padding-top: 40px;")))
              #enrichr_ui(ns("en_btn"))
              #shinyjs::hidden(actionButton(ns("trnsNet"), "Copy")),
              #actionButton(ns("enrichrBtn1"), "Enrichr", icon = icon("dna"))
