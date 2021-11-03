@@ -13,12 +13,7 @@ shinyUI(
                             use_bs_tooltip(),
                             useShinydashboard(),
                             use_waiter(),
-                            #use_hostess(),
                             rclipboard::rclipboardSetup(),
-                            # waiter_on_busy(
-                            #   html = spin_loaders(36, color = "black"),
-                            #   color = transparent(.5)
-                            #   ),
                             value = "home",
                             includeHTML("www/index.html")
                    ),

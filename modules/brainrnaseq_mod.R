@@ -1,6 +1,4 @@
 
-# Gene Text Input Module UI function
-
 brainrnaseq_ui <- function(id) {
   
   ns <- NS(id)
@@ -10,8 +8,12 @@ brainrnaseq_ui <- function(id) {
       column(width = 12,  geneInputUI(ns("genes"))),
       ),hr(),
     fluidRow(
-      column(width = 6, echarts4rOutput(ns("plot1_human"))),
-      column(width = 6, echarts4rOutput(ns("plot1_mice")))
+      column(width = 6,
+             echarts4rOutput(ns("plot1_human"))
+             ),
+      column(width = 6, 
+             echarts4rOutput(ns("plot1_mice"))
+             )
     ),hr(),
     fluidRow(
       column(width = 6, echarts4rOutput(ns("plot2_human"))),
@@ -28,20 +30,13 @@ brainrnaseq_ui <- function(id) {
              )
     ),
     )
-  
-  
 }
-
-
-# Gene Text Input Module Server function
 
 brainrnaseq_server <- function(id) {
   moduleServer(
     id,
     function(input, output, session) {
-      
-      
-      
+
       genes_ids <- geneOutput("genes")
       
       observeEvent(genes_ids$info_btn(),{
@@ -52,8 +47,7 @@ brainrnaseq_server <- function(id) {
       observeEvent(genes_ids$btn(), {
 
         genes <- isolate(genes_ids$genes())
-        #req(genes)
-        
+
         shinyjs::hide("plot1_human")
         shinyjs::hide("plot1_mice")
         shinyjs::hide("plot2_human")
@@ -225,19 +219,11 @@ brainrnaseq_server <- function(id) {
         else{
           shinyalert("Opps", "Couldn't Find Your Gene/s", type = "error")
         }
-        
         shinyFeedback::resetLoadingButton("genes-btn")
-          
-
       })
-      
     }
-    
   )
-  
 }
-
-
 
 ks_brainseq <- function(genes, db = my_db) {
   
@@ -272,10 +258,3 @@ to harvest neurons, anti-HepaCAM to harvest astrocytes, and BSL-1 to harvest end
                          <a href="https://www.brainrnaseq.org/" target="_blank" rel="noopener noreferrer">Website</a>
                          </p>
                          ')
-
-
-
-
-
-
-  

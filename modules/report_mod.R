@@ -18,10 +18,11 @@ report_ui <- function(id) {
      column(width = 10, 
             hostess_loader("load", text_color = "black",
                            center_page = TRUE, min = 15,
-                           svg = "ks_logo_new.svg",  progress_type = "fill"),
+                           svg = "images/ks_logo_new.svg",  progress_type = "fill"),
             includeHTML("www/report_tab_ui.html")
      
   )
+  
     
   )
   )
