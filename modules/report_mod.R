@@ -50,7 +50,7 @@ report_server <- function(id) {
                       html = hostess$get_loader(
                         text_color = "black",
                         center_page = TRUE,
-                        svg = "assets/images/ks_logo_new.svg", 
+                        svg = "assets/images/ks_new_logo.svg", 
                         progress_type = "fill", 
                         fill_direction = sample(c("btt"), 1)
                         )
@@ -65,6 +65,7 @@ report_server <- function(id) {
             
             hostess$close()
             waiter_hide()
+            
 
           }
           
@@ -73,8 +74,8 @@ report_server <- function(id) {
           temp_path1 <- file.path(tempdir(), "ks-report.Rmd")
           file.copy(paste0("www/", "ks-report.Rmd"), temp_path1, overwrite = TRUE)
           
-          temp_path2 <- file.path(tempdir(), "ks_logo_new.svg")
-          file.copy(paste0("www/", "assets/images/ks_logo_new.svg"), temp_path2, overwrite = TRUE)
+          temp_path2 <- file.path(tempdir(), "ks_new_logo.svg")
+          file.copy(paste0("www/", "assets/images/ks_new_logo.svg"), temp_path2, overwrite = TRUE)
           
           temp_path3 <- file.path(tempdir(), "string_embedded_network_v2.0.2.js")
           file.copy("www/string_embedded_network_v2.0.2.js", temp_path3, overwrite = TRUE)

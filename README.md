@@ -25,7 +25,7 @@ offering the option of uploading user-defined datasets.
 
 ## Workflow
 
-![Kaleidoscope Workflow](www/assets/images/KS_WorkflowFigure.png)
+![Kaleidoscope Workflow](www/assets/images/KS_WorkflowFigure.webp)
 
 ## Interface
 

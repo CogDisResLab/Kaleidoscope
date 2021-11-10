@@ -4,9 +4,12 @@ shinyUI(
                    id = "tb_sets",
                    #position = "fixed-top",
                    header = "",
-
+             
                    # Home tab ----
                    tabPanel("Home", icon = icon("home"),
+                            tags$head(tags$link(rel="apple-touch-icon",sizes="180x180", href="assets/favicon/apple-touch-icon.png")),
+                            tags$head(tags$link(rel="icon",type="image/png", sizes="32x32", href="assets/favicon/favicon-32x32.png")),
+                            tags$head(tags$link(rel="icon",type="image/png", sizes="16x16", href="assets/favicon/favicon-16x16.png")),
                             useShinyjs(),
                             useShinyalert(),
                             use_bs_popover(),
@@ -23,7 +26,7 @@ shinyUI(
                             value = "app",
                             navbarPage(title = "",
                                        #position = "fixed-top",
-                                       
+
                                        # BrainSeq ----
                                        tabPanel("BrainRNA-Seq",icon = icon("", class = "icon-bargraph", verify_fa = FALSE),
                                                 brainrnaseq_ui("brainrnaseqTab"),
