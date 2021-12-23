@@ -23,7 +23,8 @@ lookup_ui <- function(id) {
       column(width = 3,
              pickerInput(inputId=ns("dbs10"),label="Microcystin",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
              pickerInput(inputId=ns("dbs11"),label="Renal DBs",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
-             pickerInput(inputId=ns("dbs12"),label="Other",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1"))
+             pickerInput(inputId=ns("dbs12"),label="Myositis",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
+             pickerInput(inputId=ns("dbs13"),label="Other",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1"))
       )),
       #column(width = 12,
       #hidden(div(ns("lookup_tabset_div"),
@@ -108,7 +109,8 @@ lookup_server <- function(id) {
       updatePickerInput(session, "dbs9", choices = filter(ks_datasets, Group == "Aging") %>% pull(DataSet))
       updatePickerInput(session, "dbs10", choices = filter(ks_datasets, Group == "Microcysti") %>% pull(DataSet))
       updatePickerInput(session, "dbs11", choices = filter(ks_datasets, Group == "KID") %>% pull(DataSet))
-      updatePickerInput(session, "dbs12", choices = filter(ks_datasets, Group %in% c("COVID", "Other", "MB")) %>% pull(DataSet))
+      updatePickerInput(session, "dbs12", choices = filter(ks_datasets, Group == "MYO") %>% pull(DataSet))
+      updatePickerInput(session, "dbs13", choices = filter(ks_datasets, Group %in% c("COVID", "Other", "MB")) %>% pull(DataSet))
 
       ns <- session$ns
       w <- Waiter$new(ns(c("plot1", "plot2", "heatmap_plot")), 
@@ -154,7 +156,7 @@ lookup_server <- function(id) {
         genes_raw <- isolate(genes_ids$genes())
         #req(genes)
 
-        datasets_selected <- c(input$dbs1,input$dbs2, input$dbs3, input$dbs4, input$dbs5, input$dbs6, input$dbs7, input$dbs8, input$dbs9, input$dbs10, input$dbs11)
+        datasets_selected <- c(input$dbs1,input$dbs2, input$dbs3, input$dbs4, input$dbs5, input$dbs6, input$dbs7, input$dbs8, input$dbs9, input$dbs10, input$dbs11, input$dbs12)
         #req(datasets_selected)
         
         if(!any(all(trimws(genes_raw) == "") | is.null(datasets_selected))){

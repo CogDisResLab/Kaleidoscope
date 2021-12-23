@@ -91,11 +91,18 @@ report_server <- function(id) {
                              )
           
           # Knit the document in its own environment, isolating its code from the Shiny app code.
+          # xfun::Rscript_call(
+          #   rmarkdown::render,
+          #   list(input = temp_path1, 
+          #        output_format = file,
+          #        params = param_list,
+          #        envir = new.env())
+          # )
           rmarkdown::render(input = temp_path1,
                             #output_format = rmarkdown::html_document(),
                             output_file = file, # this lets the rendered report be accessed by download handler
                             params = param_list,
-                            envir = new.env(parent = globalenv())
+                            envir = new.env()
           )
           
           hostess$close()

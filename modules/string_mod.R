@@ -7,13 +7,13 @@ string_ui <- function(id) {
   
   ns <- NS(id)
   
-  sting_md <-
-    bs_modal(
-      id = ns("string_info"),
-      title = "STRING",
-      body = HTML("Hi There"),
-      size = "medium"
-    )
+  # sting_md <-
+  #   bs_modal(
+  #     id = ns("string_info"),
+  #     title = "STRING",
+  #     body = HTML("Text Here"),
+  #     size = "medium"
+  #   )
   
   tagList(
     fluidRow(
@@ -185,6 +185,7 @@ string_server <- function(id) {
                        #headerStyle = list(fontSize = '7.5px', align = "center"),
                        cell = function(value) {
                          color <- rating_color(value)
+                         #render.reactable.cell.with.tippy(text = "value", tooltip = value)
                          value <- ""
                          div(class = "spi-rating", style = list(background = color), value)
                        }
@@ -253,14 +254,14 @@ ks_string <- function(gene, score, nodes, get_img = T, high_res = F, multi = F) 
   
   # get interactors 
   if(multi) {
-    api_url <- paste0("http://version-11-0.string-db.org/api/json/network?identifiers=",
+    api_url <- paste0("https://string-db.org/api/json/network?identifiers=",
                       paste0(gene, collapse = "%0d"),"&species=9606&required_score=",
                       score)
     
   }
   
   else {
-    api_url <- paste0("http://version-11-0.string-db.org/api/json/interaction_partners?identifiers=",
+    api_url <- paste0("https://string-db.org/api/json/interaction_partners?identifiers=",
                       gene,"&species=9606&required_score=",
                       score,"&limit=",nodes)
   }
@@ -299,7 +300,7 @@ ks_string <- function(gene, score, nodes, get_img = T, high_res = F, multi = F) 
     
     
     #  Get gene info
-    intr_info_api_url <- paste0("http://version-11-0.string-db.org/api/json/resolve?identifiers=",
+    intr_info_api_url <- paste0("https://string-db.org/api/json/resolve?identifiers=",
                                 paste(IdList,collapse ="%0D"),
                                 "&species=9606")
     
@@ -398,6 +399,20 @@ convert_na <- function(x, value = 1) {
   
   round(x,  4)
 }
+
+
+# render.reactable.cell.with.tippy <- function(text, tooltip){
+#   div(
+#     style = "text-decoration: underline;
+#                 text-decoration-style: dotted;
+#                 text-decoration-color: #FF6B00;
+#                 cursor: info;
+#                 white-space: nowrap;
+#                 overflow: hidden;
+#                 text-overflow: ellipsis;",
+#     tippy(text = text, tooltip = tooltip)
+#   )
+# }
 
 
 

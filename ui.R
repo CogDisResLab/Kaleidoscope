@@ -34,18 +34,17 @@ shinyUI(
                                                 # css and GA tags ----
                                                 fluidRow(tags$style(type = "text/css", ".navbar {margin-bottom: 0;}"),
                                                          tags$style(type = "text/css", ".container-fluid {padding-left:5px;
-                    padding-right:5px;}"),
+                                                                    padding-right:5px;}"),
                     #tags$head(tags$style(".shiny-notification {position: fixed; top: 60% ;left: 50%")),
                                                          tags$head(HTML(
                                                            "<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src='https://www.googletagmanager.com/gtag/js?id=UA-149864972-1'></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'UA-149864972-1');
-</script>"
+                                                           <script async src='https://www.googletagmanager.com/gtag/js?id=UA-149864972-1'></script>
+                                                           <script>
+                                                           window.dataLayer = window.dataLayer || [];
+                                                           function gtag(){dataLayer.push(arguments);}
+                                                           gtag('js', new Date());
+                                                           gtag('config', 'UA-149864972-1');
+                                                           </script>"
                                                            
                                                          ))
                                                          )

@@ -13,11 +13,6 @@ library(dbplyr)
 library(bsplus)
 library(waiter)
 library(httr)
-#library(shinymui)
-
-#library(visNetwork)
-
-#library(reactlog)
 
 # ggplot theme
 theme_set(theme_bw())
