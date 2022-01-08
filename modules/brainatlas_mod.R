@@ -152,7 +152,13 @@ brainatlas_server <- function(id, ...) {
               fontsize_row = input$hm_slider3,
               Rowv = ifelse(length(ba_res$gene %>% unique()) > 1, T, F )
               
-            )
+            )  %>% 
+              plotly::config(
+                toImageButtonOptions = list(
+                  format = "svg",
+                  filename = "gtex_hm"
+                )
+              )
             
           })
           

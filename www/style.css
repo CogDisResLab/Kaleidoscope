@@ -2411,17 +2411,17 @@ Google map
 
 /* Tags */
 .tags a {
-  background: #111;
+  background: #0E86D4;
   display: inline-block;
   font-size: 10px;
-  color: #fff;
+  color: #0E86D4;
   padding: 4px 10px 4px 12px;
   margin: 0 1px 4px;
   border-radius: 2px;
 }
 
 .tags a:hover {
-  background: rgba(17, 17, 17, 0.8);
+  background: #055C9D;
 }
 
 /*--------------------------------------------------------------
@@ -2483,6 +2483,9 @@ Google map
 	Shop Items
 --------------------------------------------------------------*/
 .shop-item {
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  border: 1px solid #e4e4e4;
+  border-radius: 20px;
   text-align: center;
   margin: 0 0 40px;
 }
@@ -2498,7 +2501,6 @@ Google map
 
 .shop-item-detail,
 .shop-item-image:after {
-  transition: all 0.4s ease-in-out 0s;
 }
 
 .shop-item-image:after {
@@ -2532,16 +2534,13 @@ Google map
 }
 
 /* Shop item hover */
+
 .shop-item:hover .shop-item-image:after {
-  background: rgba(255, 255, 255, 0.7);
+
 }
 
 .shop-item:hover .shop-item-detail {
-  opacity: 1;
-  bottom: 50%;
-  -webkit-transform: translateY(50%);
-  -ms-transform: translateY(50%);
-  transform: translateY(50%);
+  
 }
 
 /* -------------------------------------------------------------------
@@ -2599,6 +2598,47 @@ Google map
 .reviews {
   margin: 0;
 }
+
+
+.card__img {
+	 display: block;
+	 width: 100%;
+	 height: 18rem;
+	 object-fit: cover;
+}
+ .card__content {
+	 padding: 3rem 3rem;
+}
+ .card__header {
+	 color: #0d0d0d;
+	 margin-bottom: 1.5rem;
+}
+ .card__text {
+	 color: #3d3d3d;
+}
+ .card__btn {
+	 display: block;
+	 width: 100%;
+	 padding: 1.5rem;
+	 text-align: center;
+	 color: #3363ff;
+	 background-color: #e6ecff;
+	 border: none;
+	 border-radius: 0.4rem;
+	 transition: 0.2s;
+	 cursor: pointer;
+}
+ .card__btn span {
+	 margin-left: 1rem;
+	 transition: 0.2s;
+}
+ .card__btn:hover, .card__btn:active {
+	 background-color: #dce4ff;
+}
+ .card__btn:hover span, .card__btn:active span {
+	 margin-left: 1.5rem;
+}
+
 
 /*--------------------------------------------------------------
 	Showcase Page
@@ -2953,10 +2993,14 @@ Google map
   color: hsl(116, 30%, 25%);
 }
 
-
 .status-knockdown {
   background: hsl(350, 70%, 90%);
   color: hsl(350, 45%, 30%);
+}
+
+.status-reactome {
+  background: hsl(200, 70%, 90%);
+  color: hsl(200, 45%, 30%);
 }
 
 .container-fluid{
@@ -2964,6 +3008,31 @@ overflow: hidden;
 padding: 0;
 }
 
+.vl {
+  border-left: 1px solid black;
+  height: 200px;
+  padding: 10px;
+}
+
+.status-tdark {
+  background: hsl(0, 0%, 31%);
+  color: white;
+}
+
+.status-tbio {
+  background: hsl(45, 100%, 50%);
+  color: hsl(45, 45%, 25%);
+}
+
+.status-tchem {
+  background: 	hsl(219, 79%, 66%);
+  color: 	hsl(219, 39%, 33%);
+}
+
+.status-tclin {
+  background: hsl(140, 52%, 55%);
+  color: hsl(140, 25%, 20%);
+}
 
 
 

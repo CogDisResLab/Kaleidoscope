@@ -4,6 +4,7 @@ shinyUI(
                    id = "tb_sets",
                    #position = "fixed-top",
                    header = "",
+                   footer = hr(),
              
                    # Home tab ----
                    tabPanel("Home", icon = icon("home"),
@@ -16,7 +17,7 @@ shinyUI(
                             use_bs_tooltip(),
                             useShinydashboard(),
                             use_waiter(),
-                            rclipboard::rclipboardSetup(),
+                            #rclipboard::rclipboardSetup(),
                             value = "home",
                             includeHTML("www/index.html")
                    ),
@@ -77,6 +78,10 @@ shinyUI(
                                        tabPanel("GWAS", icon = icon("", class = "icon-map", verify_fa = FALSE),
                                                 gwascatalog_UI("gwascatalogTab")
                                                 ),
+                                       tabPanel("IDG", icon = icon("", class = "icon-lightbulb", verify_fa = FALSE),
+                                                pharos_ui("pharosTab")
+                                       ),
+                    
                                        tabPanel("Report", icon = icon("", class = "icon-browser", verify_fa = FALSE),
                                                 report_ui("reportTab")
                                        )

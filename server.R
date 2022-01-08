@@ -8,6 +8,7 @@ server<- shinyServer(function(input, output, session){
   gtex_server("gtexTab")
   brainatlas_server("brainatlasTab")
   lookup_server("lookupTab")
+  pharos_server("pharosTab")
   report_server("reportTab")
   
   

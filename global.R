@@ -13,6 +13,10 @@ library(dbplyr)
 library(bsplus)
 library(waiter)
 library(httr)
+library(ghql)
+library(jsonlite)
+library(reactablefmtr)
+library(NGLVieweR)
 
 # ggplot theme
 theme_set(theme_bw())
@@ -32,6 +36,7 @@ source("modules/lookup_mod.R")
 source("modules/enrichr_mod.R")
 source("modules/info_mod.R")
 source("modules/download_mod.R")
+source("modules/pharos_mod.R")
 source("modules/report_mod.R")
 
 # Data ----
@@ -46,10 +51,12 @@ ba_all_human_avg <- readRDS("modules/brainatlas_avg_all_genes.RDS")
 my_db <- dbPool(
   RMySQL::MySQL(), 
   dbname = "ksdatabase_new",
-  host = "cdrlshinyapps-2.cdkkdi6q6ptl.us-east-2.rds.amazonaws.com",
-  username = "cdrl",
-  password = "cdrl_ks"
+  host = Sys.getenv("ks_host"),
+  username = Sys.getenv("ks_username"),
+  password = Sys.getenv("ks_pass")
 )
+
+conn <- GraphqlClient$new(url = 'https://pharos-api.ncats.io/graphql')
 
 
 onStop(function() {

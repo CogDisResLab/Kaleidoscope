@@ -124,6 +124,12 @@ gtex_server <- function(id) {
               fontsize_col = input$hm_slider2,
               fontsize_row = input$hm_slider3,
               Rowv = ifelse(length(gtex_res$gene) > 1, T, F )
+              ) %>% 
+              plotly::config(
+                toImageButtonOptions = list(
+                  format = "svg",
+                  filename = "gtex_hm"
+                )
               )
           })
           

@@ -357,7 +357,13 @@ lookup_server <- function(id) {
                   limits = c((input$hm_slider1 * -1), input$hm_slider1)),
                 label_names = c("Gene", "DataSet", "Scaled Value"),
                 custom_hovertext = labelmatrix
-              )
+              )  %>% 
+                plotly::config(
+                  toImageButtonOptions = list(
+                    format = "svg",
+                    filename = "gtex_hm"
+                  )
+                )
               
               
               

@@ -256,5 +256,4 @@ to harvest neurons, anti-HepaCAM to harvest astrocytes, and BSL-1 to harvest end
                          <a href="https://pubmed.ncbi.nlm.nih.gov/26687838/" target="_blank" rel="noopener noreferrer">PMID: 26687838</a>
                          <br>
                          <a href="https://www.brainrnaseq.org/" target="_blank" rel="noopener noreferrer">Website</a>
-                         </p>
-                         ')
+                         </p>')

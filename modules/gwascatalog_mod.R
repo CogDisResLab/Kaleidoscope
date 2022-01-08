@@ -64,10 +64,11 @@ gwascatalog_server <- function(id) {
                       
                       columns = list(
                         Link = colDef(
+                          align = "center",
+                          width = 75,
                           cell = function(value) {
-                            htmltools::tags$a(href = paste0("https://", value), target = "_blank", "Link")
-                          },
-                          style = list(color = "blue")
+                            htmltools::tags$a(href = paste0("https://", value), target = "_blank", icon("","icon-expand", verify_fa = FALSE))
+                          }
                         )
                       ),
                       

@@ -94,15 +94,18 @@ ilincs_server <- function(id) {
                       filterable = TRUE,
                       columns = list(
                         Link = colDef(
+                          align = "center",
+                          width = 75,
                           cell = function(value) {
-                            htmltools::tags$a(href = value, target = "_blank", "Link")
-                          },
-                          style = list(color = "blue")
+                            htmltools::tags$a(href = value, target = "_blank", icon("","icon-expand", verify_fa = FALSE))
+                          }
                           ),
                         
-                        Type = colDef(cell = function(value) {
-                          class <- paste0("tag status-", tolower(gsub(" ", "", value)))
-                          div(class = class, value)
+                        Type = colDef(
+                          align = "center",
+                          cell = function(value) {
+                            class <- paste0("tag status-", tolower(gsub(" ", "", value)))
+                            div(class = class, value)
                         })
                         
                         )

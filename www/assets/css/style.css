@@ -2410,17 +2410,17 @@ Google map
 
 /* Tags */
 .tags a {
-  background: #111;
+  background: #0E86D4;
   display: inline-block;
   font-size: 10px;
-  color: #fff;
+  color: #0E86D4;
   padding: 4px 10px 4px 12px;
   margin: 0 1px 4px;
   border-radius: 2px;
 }
 
 .tags a:hover {
-  background: rgba(17, 17, 17, 0.8);
+  background: #055C9D;
 }
 
 /*--------------------------------------------------------------
