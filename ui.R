@@ -1,10 +1,12 @@
 shinyUI(
   navbarPage(title = "Kaleidoscope",
+             collapsible = T,
                    theme = "style.css",
                    id = "tb_sets",
                    #position = "fixed-top",
                    header = "",
                    footer = hr(),
+             #inverse = T,
              
                    # Home tab ----
                    tabPanel("Home", icon = icon("home"),
@@ -17,15 +19,16 @@ shinyUI(
                             use_bs_tooltip(),
                             useShinydashboard(),
                             use_waiter(),
-                            #rclipboard::rclipboardSetup(),
                             value = "home",
                             includeHTML("www/index.html")
                    ),
-                   
+
                    # App Tab ----
                    tabPanel("App", icon = icon("th", lib = "glyphicon"),
                             value = "app",
                             navbarPage(title = "",
+                                       collapsible = T,
+                                       #inverse = T,
                                        #position = "fixed-top",
 
                                        # BrainSeq ----
