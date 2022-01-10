@@ -772,7 +772,13 @@ if(!is.null(ba_res)) {
     fontsize_row = 5,
     Rowv = ifelse(length(ba_res$gene %>% unique()) > 1, T, F )
     
-  )
+  ) %>% 
+    plotly::config(
+      toImageButtonOptions = list(
+        format = "svg",
+        filename = "ba_hm"
+      )
+    )
 }
 
 if(!is.null(ba_res)) {    
@@ -875,6 +881,12 @@ if(!is.null(gtex_res)) {
     fontsize_col = 5,
     fontsize_row = 5,
     Rowv = ifelse(length(gtex_res$gene) > 1, T, F )
+    )  %>% 
+    plotly::config(
+      toImageButtonOptions = list(
+        format = "svg",
+        filename = "gtex_hm"
+      )
     )
 }
 ```
