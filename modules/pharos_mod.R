@@ -461,7 +461,7 @@ pharos_server <- function(id) {
                 mutate(strcture = ifelse(!is.na(smiles), paste0("https://pharos-ligand.ncats.io/indexer/render?structure=",
                                          URLencode(smiles, reserved = T), "&size=200"
                 ), NA)) %>%
-                select(name, strcture,type, value, reference, ligid, isdrug)
+                select(name, strcture,type, value, reference, ligid, isdrug, targetCount)
               
               drug_list <- split(pharos_res$ligands, pharos_res$ligands$name)
               
@@ -642,6 +642,7 @@ query targetDetails($gene: String!){
       isdrug
       name
       description
+      targetCount
       activities(all:false) {
         type
         value
@@ -656,6 +657,7 @@ query targetDetails($gene: String!){
       isdrug
       name
       description
+      targetCount
       activities(all:false) {
         type
         value
@@ -745,14 +747,18 @@ drug_card <- function(x) {
                 h4(class="shop-item-title",style = "display:inline;", paste0(x$type, ": ")),
                 h4(class="shop-item-title tag status-knockdown",style = "display:inline;", round(x$value, 2))
             ),
-            div(class="btn btn-round btn-xs", style = "padding: 15px;",
-                a(href=paste0("https://pharos.nih.gov/ligands/", x$ligid), target="_blank",
-                  span(icon("link"))
-                  )
-                ),
+            # div(class="btn btn-round btn-xs", style = "padding: 15px;",
+            #     a(href=paste0("https://pharos.nih.gov/ligands/", x$ligid), target="_blank",
+            #       span(icon("link"))
+            #       )
+            #     ),
+            div(style = "padding: 15px 0px;",
+                h4(class="shop-item-title",style = "display:inline;", "Targets: "),
+                h4(class="shop-item-title tag status-overexpression",style = "display:inline;", x$targetCount)
+            ),
             div(style = "padding: 15px;",
                 h4(class="shop-item-title",style = "display:inline;", "Type: "),
-                h4(class = ifelse(x$isdrug =="Drug","shop-item-title tag status-overexpression", "shop-item-title tag status-reactome"),style = "display:inline;", x$isdrug)
+                h4(class = ifelse(x$isdrug =="Drug","shop-item-title tag status-reactome", "shop-item-title tag status-reactome"),style = "display:inline;", x$isdrug)
             )
         )
     )
