@@ -136,7 +136,7 @@ pharos_server <- function(id) {
               T ~ "white"
             )
             
-            e_charts() %>% 
+            e_charts(renderer="svg") %>% 
               e_gauge(value = case_when(
                 idg_l == "Tdark" ~ 12.5,
                 idg_l == "Tbio" ~ 37.5,
@@ -182,7 +182,8 @@ pharos_server <- function(id) {
               e_title("IDG Development Level", left = "center") %>% 
               e_toolbox(
                 show = T,
-                itemSize = 30,
+                itemSize = 22,
+                right = "20%",
                 feature = list(
                   myInfo = list(
                     show = T,
@@ -192,7 +193,7 @@ pharos_server <- function(id) {
                       JS(paste0("function (){swal({ html:true, title: '', text:'",str_squish(gsub("\n", "",idg_lvl_info2)),"', customClass: 'alert-size-l sweet-alert'});}"))
                   )
                 )
-              )
+              )  %>% e_toolbox_feature(feature = c("saveAsImage"))
             
           })
           
@@ -332,7 +333,7 @@ pharos_server <- function(id) {
               #full_join(mutate(res2$patentCounts, Type = "Patent")) %>% 
               filter(year >= 2000, year < 2019) %>% 
               group_by(Type) %>% 
-              e_charts(year) %>% 
+              e_charts(year, renderer="svg") %>% 
               e_line(score) %>% 
               {if(nrow(pharos_res$patentCounts)>0) {e_line(.,count, y_index = 1)} else .} %>% 
               e_x_axis(type= "category") %>% 
@@ -342,7 +343,9 @@ pharos_server <- function(id) {
                 Patent = F
               )) %>% 
               e_title("Publication Statistics", subtext = "Statistics about the mentions of this target in literature, extracted via text mining") %>% 
-              e_tooltip()
+              e_tooltip() %>% 
+              e_toolbox(right = "10%") %>%
+              e_toolbox_feature(feature = c("saveAsImage", "dataView"))
             
             
           })
@@ -353,31 +356,35 @@ pharos_server <- function(id) {
               pharos_res$diseases %>% 
                 mutate(name = tools::toTitleCase(tolower(name))) %>% 
                 arrange(associationCount) %>% 
-                e_charts(name) %>% 
+                e_charts(name, renderer="svg") %>% 
                 e_bar(associationCount, legend = F) %>% 
                 e_flip_coords() %>% 
                 e_grid(left = 200) %>% 
                 e_y_axis(axisLabel = list(fontSize = 9)) %>% 
-                e_x_axis(type="log", name = "Associations", nameLocation = 'end',
+                e_x_axis(type="log", name = "Associations", nameLocation = 'center', nameGap = 40,
                          nameTextStyle = list(verticalAlign = "bottom")
                 ) %>% 
-                e_title("Disease Associations", subtext = "Top diseases associated with this target, compiled by several resources (DisGeNET, eRAM, Monarch, Expression Atlas, ... etc)") %>% 
+                e_title("Disease Associations", 
+                        subtext = "Top diseases associated with this target, compiled by several resources (DisGeNET, eRAM, Monarch, Expression Atlas, ... etc)") %>% 
                 e_tooltip() %>% 
-                e_toolbox(
-                  show = T,
-                  feature = list(
-                    saveAsImage = list(
-                      show = T
-                    )
-                    # myInfo = list(
-                    #   show = T,
-                    #   title= 'info',
-                    #   icon= "image://https://img.icons8.com/color/48/000000/info--v1.png",
-                    #   onclick = 
-                    #     JS(paste0("function (){swal({ html:true, title:'<i>IDG</i>', text:'",str_squish(gsub("\n", "",idg_lvl_info2)),"', customClass: 'sweet-alert  alert-size-l showSweetAlert visible'});}"))
-                    # )
-                  )
-                )
+                e_toolbox(right = "10%") %>%
+                e_toolbox_feature(feature = c("saveAsImage", "dataView")) 
+                
+                # e_toolbox(
+                #   show = T,
+                #   feature = list(
+                #     saveAsImage = list(
+                #       show = T
+                #     )
+                #     # myInfo = list(
+                #     #   show = T,
+                #     #   title= 'info',
+                #     #   icon= "image://https://img.icons8.com/color/48/000000/info--v1.png",
+                #     #   onclick = 
+                #     #     JS(paste0("function (){swal({ html:true, title:'<i>IDG</i>', text:'",str_squish(gsub("\n", "",idg_lvl_info2)),"', customClass: 'sweet-alert  alert-size-l showSweetAlert visible'});}"))
+                #     # )
+                #   )
+                # )
               
               
             })
@@ -399,13 +406,15 @@ pharos_server <- function(id) {
             pharos_res$tinx %>% 
               #filter(!is.na(disease.name)) %>% 
               group_by(Disease) %>% 
-              e_charts(Novelty) %>% 
+              e_charts(Novelty, renderer="svg") %>% 
               e_scatter(Importance, symbol_size = 5, legend = F, color = "blue") %>% 
               e_x_axis(type = "log", name = "Novelty") %>% 
-              e_y_axis(type = "log", name = "Importance") %>% 
+              e_y_axis(type = "log", name = "Importance", nameLocation = "center",nameGap = 40,) %>% 
               e_title("Target-Disease Importance and Novelty (Tin-x)", 
                       subtext = "Associations between diseases and targets using natural language processing techniques") %>%
-              e_tooltip()
+              e_tooltip() %>% 
+              e_toolbox(right = "10%") %>%
+              e_toolbox_feature(feature = c("saveAsImage", "dataView"))
             
             
             })
@@ -737,7 +746,8 @@ drug_card <- function(x) {
     div(class = "shop-item", 
         a(href=paste0("https://pharos.nih.gov/ligands/", x$ligid), target="_blank", 
         div(
-          h1(class = "shop-item-title", style = "font-size: 1.5rem; font-weight: bold;", stringr::str_trunc(x$name, width = 20)),
+          h1(class = "shop-item-title",
+             style = "font-size: 1.5rem; font-weight: bold; color: #337ab7; text-decoration: underline;", stringr::str_trunc(x$name, width = 20)),
           hr(class="divider-w mt-10 mb-20")
         ),
         div(class = "shop-item-image",
@@ -782,6 +792,7 @@ gene_card <- function(x, af_div) {
           renderNGLVieweR(af_div),
           h4(class = "shop-item-title", style = "font-size: 2rem;", x$name),
           a(target="_blank" ,rel="noopener noreferrer",
+            style="color: #337ab7; text-decoration: underline;",
             href=paste0("https://www.uniprot.org/uniprot/", x$uniprot), x$uniprot),
           div(style = "display:flex; justify-content:space-between;",
               div(style = "padding: 15px;",
