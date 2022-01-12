@@ -554,6 +554,7 @@ pharos_server <- function(id) {
         
         else{
           shinyalert("Opps", "Couldn't Find Your Gene/s", type = "error")
+          w$hide()
         }
         shinyFeedback::resetLoadingButton("genes-btn")
       })
