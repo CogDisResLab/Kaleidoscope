@@ -337,12 +337,14 @@ pharos_server <- function(id) {
               e_line(score) %>% 
               {if(nrow(pharos_res$patentCounts)>0) {e_line(.,count, y_index = 1)} else .} %>% 
               e_x_axis(type= "category") %>% 
+              e_y_axis(name = "Score", nameLocation = 'center', nameGap = 40) %>% 
               e_legend(selected = list(
                 PubMed = T,
                 PubTator = T, 
                 Patent = F
               )) %>% 
-              e_title("Publication Statistics", subtext = "Statistics about the mentions of this target in literature, extracted via text mining") %>% 
+              e_title("Publication Statistics", 
+                      subtext = "Statistics about the mentions of this target in literature, extracted via text mining") %>% 
               e_tooltip() %>% 
               e_toolbox(right = "10%") %>%
               e_toolbox_feature(feature = c("saveAsImage", "dataView"))
