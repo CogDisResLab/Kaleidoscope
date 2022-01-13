@@ -75,12 +75,15 @@ gtex_server <- function(id) {
         
         gtex_res <- withProgress(message = "connecting to GTEx ...", {
           ks_gtex(genes = genes, db = my_db) 
+          #ks_gtex_2(genes, conn)
         })
         
         if(!is.null(gtex_res)) {
           
           gtex_res %>% 
             pivot_longer(2:ncol(.), names_to = "Tissue", values_to = "TPM") -> gtex_res_processed
+          
+          #gtex_res_processed <- gtex_res
           
           # add colors to tissue groups
             #mutate(Group = str_extract(Tissue, "[^_]+")) -> gtex_res_processed
@@ -249,8 +252,62 @@ expression association</p>
 # gtex_res_processed$Tissue %>% unique()
 
 
+
+
 brain_tissues <- c("brain_amygdala", "brain_anterior_cingulate_cortex_ba24","brain_caudate_basal_ganglia",
                    "brain_cerebellar_hemisphere" ,"brain_cerebellum" ,"brain_cortex","brain_frontal_cortex_ba9",
                    "brain_hippocampus" ,"brain_hypothalamus","brain_nucleus_accumbens_basal_ganglia" ,
                    "brain_putamen_basal_ganglia","brain_spinal_cord_cervical_c_1" ,"brain_substantia_nigra" )
+
+
+
+
+ks_gtex_2 <- function(genes, conn) {
+  
+  query <-'query Results($gene: [String!]){
+    batch(targets: $gene) {
+      targetResult {
+        targets {
+          sym
+          gtex {
+            tissue
+            gender
+            tpm
+          }
+        }
+      }
+    }
+    }'
+  
+  new <- Query$new()$query('link', query)
+  
+  res <- conn$exec(new$link, variables = list(gene = genes)) %>%
+    fromJSON(flatten = T)
+  
+
+  if(!is.null(res$data$batch$targetResult$target)) {
+    map2(res$data$batch$targetResult$targets$sym,
+         res$data$batch$targetResult$targets$gtex, 
+         add_gene) %>% 
+      map_df(rbind) %>% 
+      distinct(.keep_all = T) %>% 
+      suppressWarnings({separate(tissue, sep = " - ", c("Tissue", "Type"))}) %>% 
+      replace_na(list(Type = "Other")) %>% 
+      group_by(Gene, tissue) %>% 
+      summarise(TPM = mean(tpm)) %>% 
+      ungroup() %>% 
+      select(gene = Gene, Tissue = tissue, TPM)
+  }
+  
+  else {
+    NULL
+    }
+  
+}
+
+
+add_gene <- function(gene, df) {
+  mutate(df, Gene = gene)
+}
+
 
