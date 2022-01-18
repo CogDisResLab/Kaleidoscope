@@ -4,7 +4,7 @@ lookup_ui <- function(id) {
   tagList(
     fluidRow(
       column(width = 12,  geneInputUI(ns("genes")),hr()), 
-      shinydashboard::box(status = "info", width = 12,
+      #shinydashboard::box(status = "info", width = 12,
       column(width = 3,
              pickerInput(inputId=ns("dbs1"),label="Schizophrenia",choices="",multiple = TRUE,options = list(`actions-box` = TRUE, `selected-text-format` = "count > 1")),
              pickerInput(inputId=ns("dbs2"),label="MDD",choices="",  multiple = T,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
@@ -25,7 +25,8 @@ lookup_ui <- function(id) {
              pickerInput(inputId=ns("dbs11"),label="Renal DBs",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
              pickerInput(inputId=ns("dbs12"),label="Myositis",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
              pickerInput(inputId=ns("dbs13"),label="Other",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1"))
-      )),
+      #)
+      ),
       #column(width = 12,
       #hidden(div(ns("lookup_tabset_div"),
       tabsetPanel(id = ns("lookup_tabset"),
@@ -48,10 +49,10 @@ lookup_ui <- function(id) {
                                     echarts4rOutput(ns("plot2"), height = "700")
                              ),
                              #div(ns("box_1"),
-                             shinydashboard::box(id = ns("box_1"),collapsible = T, width = 12,
+                             #shinydashboard::box(id = ns("box_1"),collapsible = T, width = 12,
                                                  column(width = 6, plotOutput(ns("plot3"), height = "500")),
                                                  column(width = 6, echarts4rOutput(ns("plot4"), height = "500"))
-                             )
+                             #)
                            )
                            
                            ),
@@ -140,7 +141,7 @@ lookup_server <- function(id) {
         shinyjs::hide("plot3")
         shinyjs::hide("plot4")
         shinyjs::hide("plot5")
-        shinyjs::hide("box_1")
+        #shinyjs::hide("box_1")
         shinyjs::hide("box_2")
         shinyjs::hide("heatmap_plot")
         shinyjs::hide("geneset_network")
@@ -379,7 +380,7 @@ lookup_server <- function(id) {
             shinyjs::show("plot4")
             shinyjs::show("plot5")
             shinyjs::show("dn_btn_div")
-            shinyjs::show("box_1")
+            #shinyjs::show("box_1")
             shinyjs::show("box_2")
             shinyjs::show("heatmap_plot")
             shinyjs::show("geneset_network")
