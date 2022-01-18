@@ -30,9 +30,11 @@ lookup_ui <- function(id) {
       #column(width = 12,
       #hidden(div(ns("lookup_tabset_div"),
       tabsetPanel(id = ns("lookup_tabset"),
+                  
                   tabPanel("Summary",
-                           fluidRow(
-                             column(width = 12, reactableOutput(ns("table")),
+                           
+                           fluidRow(style="padding: 0 15px;",
+                             column(width = 12, reactableOutput(ns("table")), hr(),
                                     div(id = ns("dn_btn_div"), download_btn_ui(ns("dn_btn")), download_btn_ui(ns("dn_btn2"), label = "Download with pvalues"))
                                     ),
                              column(width = 12, hr()),
