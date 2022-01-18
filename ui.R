@@ -1,12 +1,15 @@
 shinyUI(
-  navbarPage(title = "Kaleidoscope",
+  navbarPage(title = div(img(src='assets/images/logo_wh_bg.png',
+                             style="margin-top: -20px;
+                               padding:10px;",
+                             height = 60, width = 60)),
+             windowTitle = "Kaleidoscope",
              collapsible = T,
                    theme = "style.css",
                    id = "tb_sets",
-                   #position = "fixed-top",
                    header = "",
                    footer = hr(),
-             #inverse = T,
+             inverse = T,
              
                    # Home tab ----
                    tabPanel("Home", icon = icon("home"),
@@ -53,6 +56,9 @@ shinyUI(
                                                          ))
                                                          )
                                                 ),
+                                       # tabPanel("GSEA", icon = icon("", class = "icon-genius", verify_fa = FALSE),
+                                       #          gsea_ui("gseaTab")
+                                       # ),
                                        # String ----
                                        tabPanel("STRING", icon = icon("", class = "icon-genius", verify_fa = FALSE),
                                                 string_ui("stringTab")
