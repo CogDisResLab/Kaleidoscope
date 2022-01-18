@@ -48,12 +48,12 @@ brainrnaseq_server <- function(id) {
 
         genes <- isolate(genes_ids$genes())
 
-        shinyjs::hide("plot1_human")
-        shinyjs::hide("plot1_mice")
+        #shinyjs::hide("plot1_human")
+        #shinyjs::hide("plot1_mice")
         shinyjs::hide("plot2_human")
         shinyjs::hide("plot2_mice")
-        shinyjs::hide("plot3_human")
-        shinyjs::hide("plot3_mice")
+        #shinyjs::hide("plot3_human")
+        #shinyjs::hide("plot3_mice")
         shinyjs::hide("dn_btn_div")
 
         genes <- process_gene_input(genes)
@@ -89,7 +89,8 @@ brainrnaseq_server <- function(id) {
               e_title("Brain RNA-Seq in Human", subtext = "Gene Expression values (log10(FPKM + 1)) Per Cell Type") %>% 
               e_tooltip() %>% 
               e_toolbox() %>%
-              e_toolbox_feature(feature = c("saveAsImage", "dataView"))
+              e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+              e_show_loading()
             
           })
           
@@ -111,7 +112,8 @@ brainrnaseq_server <- function(id) {
               e_title("Brain RNA-Seq in Mice", subtext = "Gene Expression values (log10(FPKM + 1)) Per Cell Type") %>% 
               e_tooltip() %>% 
               e_toolbox() %>%
-              e_toolbox_feature(feature = c("saveAsImage", "dataView"))
+              e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+              e_show_loading()
             
           })
           
@@ -131,7 +133,8 @@ brainrnaseq_server <- function(id) {
                 e_title("Brain RNA-Seq in Human", subtext = "Gene Expression values ( log10(FPKM + 1)) Per Cell Type of Input Genes") %>% 
                 e_tooltip() %>% 
                 e_toolbox() %>%
-                e_toolbox_feature(feature = c("saveAsImage", "dataView"))
+                e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+                e_show_loading()
               
             })
             
@@ -150,7 +153,8 @@ brainrnaseq_server <- function(id) {
                 e_title("Brain RNA-Seq in Mice", subtext = "Gene Expression values ( log10(FPKM + 1)) Per Cell Type of Input Genes") %>%
                 e_tooltip() %>% 
                 e_toolbox() %>%
-                e_toolbox_feature(feature = c("saveAsImage", "dataView"))
+                e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+                e_show_loading()
               
             })
             
@@ -176,7 +180,8 @@ brainrnaseq_server <- function(id) {
               e_tooltip() %>% 
               e_toolbox() %>%
               e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
-              e_legend(left = "left", top = "middle", orient = "vertical")
+              e_legend(left = "left", top = "middle", orient = "vertical") %>% 
+              e_show_loading()
             
           })
           
@@ -196,7 +201,8 @@ brainrnaseq_server <- function(id) {
               e_tooltip() %>% 
               e_toolbox() %>%
               e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
-              e_legend(left = "left", top = "middle", orient = "vertical")
+              e_legend(left = "left", top = "middle", orient = "vertical") %>% 
+              e_show_loading()
           })
           
           
@@ -208,10 +214,10 @@ brainrnaseq_server <- function(id) {
                                 rename(`log10(FPKM+1)` = FPKM)
                               , name = "BarinRNASeq_Table")
           
-          shinyjs::show("plot1_human")
-          shinyjs::show("plot1_mice")
-          shinyjs::show("plot3_human")
-          shinyjs::show("plot3_mice")
+          #shinyjs::show("plot1_human")
+          #shinyjs::show("plot1_mice")
+          #shinyjs::show("plot3_human")
+          #shinyjs::show("plot3_mice")
           shinyjs::show("dn_btn_div")
 
         }
