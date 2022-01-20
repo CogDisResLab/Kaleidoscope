@@ -159,7 +159,7 @@ lookup_server <- function(id) {
         genes_raw <- isolate(genes_ids$genes())
         #req(genes)
 
-        datasets_selected <- c(input$dbs1,input$dbs2, input$dbs3, input$dbs4, input$dbs5, input$dbs6, input$dbs7, input$dbs8, input$dbs9, input$dbs10, input$dbs11, input$dbs12)
+        datasets_selected <- c(input$dbs1,input$dbs2, input$dbs3, input$dbs4, input$dbs5, input$dbs6, input$dbs7, input$dbs8, input$dbs9, input$dbs10, input$dbs11, input$dbs12, input$dbs13)
         #req(datasets_selected)
         
         if(!any(all(trimws(genes_raw) == "") | is.null(datasets_selected))){
