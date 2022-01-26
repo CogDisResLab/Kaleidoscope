@@ -105,7 +105,7 @@ pharos_server <- function(id) {
         if(!is.null(pharos_res)) {
           uni_id <- gsub("\\s+", "", pharos_res$info$uniprot)
           db_str <- tempfile(pattern = uni_id, fileext = ".pdb")
-          download.file(paste0("https://pharos-alphafold.ncats.io/models/AF-",uni_id,"-F1-model_v1.pdb"), 
+          download.file(paste0("https://alphafold.ebi.ac.uk/files/AF-",uni_id,"-F1-model_v1.pdb"), 
                         destfile = db_str
           )
           
