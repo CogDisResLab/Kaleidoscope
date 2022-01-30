@@ -529,7 +529,7 @@ reactable(select(res, -Sample_Size),
             paste(res$Sample_Size[[index]])
           }
           )
-}
+
 
 download_this(select(res, -Sample_Size),
     output_name = "GWAS",
@@ -539,7 +539,7 @@ download_this(select(res, -Sample_Size),
     has_icon = TRUE,
     icon = "fa fa-save"
   )
-
+}
 
 
 #res <- ks_gwas(genes, my_db)
