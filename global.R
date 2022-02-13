@@ -17,6 +17,7 @@ library(ghql)
 library(jsonlite)
 library(reactablefmtr)
 library(NGLVieweR)
+library(shinydashboard)
 
 # ggplot theme
 theme_set(theme_bw())
@@ -46,6 +47,8 @@ all_mice_prop <- readRDS("modules/brainseq_avg_mice_prop_fixed.RDS")
 
 ba_all_human_avg <- readRDS("modules/brainatlas_avg_all_genes.RDS")
 
+#l1000_genes <- readRDS("modules/L1000_genes.RDS")
+
 # DB connect ----
 
 my_db <- dbPool(
@@ -67,6 +70,12 @@ onStop(function() {
 tbl(my_db, "lookup_updated_meta") %>%
   collect() %>% 
   filter(!DataSet %in% c("DISC1_Prot", "Disc_MDD_Proteomics")) -> ks_datasets
+
+
+# gsea_pathway <- gmtPathways("modules/Human_GO_bp_no_GO_iea_symbol.gmt")
+# 
+# names(gsea_pathway) <- names(gsea_pathway) %>% str_extract(., "(^[\\D\\w]+%[\\D\\w]+)%") %>% 
+#   str_remove(., "%$")
 
 
 #tell shiny to log all reactivity

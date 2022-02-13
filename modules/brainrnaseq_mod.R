@@ -75,7 +75,8 @@ brainrnaseq_server <- function(id) {
           
             bs_res_human %>% 
               group_by(HGNC_Symbol) %>%
-              e_charts(CellType, timeline = ifelse(flag, T, F), renderer="svg") %>%
+              e_charts(CellType, timeline = ifelse(flag, T, F), renderer="svg", 
+                       backgroundColor = "#ffffff") %>%
               e_bar(FPKM, legend = F) %>% 
               e_flip_coords() %>% 
               e_grid(
@@ -86,7 +87,9 @@ brainrnaseq_server <- function(id) {
                        axisLine = list(onZero = F),
                        nameLocation = "start", 
                        nameGap = 40) %>% 
-              e_title("Brain RNA-Seq in Human", subtext = "Gene Expression values (log10(FPKM + 1)) Per Cell Type") %>% 
+              e_title("Brain RNA-Seq in Human", 
+                      subtext = "Gene Expression values (log10(FPKM + 1)) Per Cell Type", 
+                      backgroundColor = "#ffffff") %>% 
               e_tooltip() %>% 
               e_toolbox() %>%
               e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
@@ -98,7 +101,8 @@ brainrnaseq_server <- function(id) {
             
             bs_res_mice %>% 
               group_by(HGNC_Symbol) %>%
-              e_charts(CellType, timeline = ifelse(flag, T, F), renderer="svg") %>%
+              e_charts(CellType, timeline = ifelse(flag, T, F), renderer="svg", 
+                       backgroundColor = "#ffffff") %>%
               e_bar(FPKM, legend = F) %>% 
               e_flip_coords() %>% 
               e_grid(
@@ -109,7 +113,8 @@ brainrnaseq_server <- function(id) {
                        axisLine = list(onZero = F),
                        nameLocation = "middle", 
                        nameGap = 40) %>% 
-              e_title("Brain RNA-Seq in Mice", subtext = "Gene Expression values (log10(FPKM + 1)) Per Cell Type") %>% 
+              e_title("Brain RNA-Seq in Mice", subtext = "Gene Expression values (log10(FPKM + 1)) Per Cell Type", 
+                      backgroundColor = "#ffffff") %>% 
               e_tooltip() %>% 
               e_toolbox() %>%
               e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
@@ -122,7 +127,8 @@ brainrnaseq_server <- function(id) {
               
               bs_res_human %>% 
                 group_by(CellType) %>% 
-                e_charts(renderer="svg") %>%
+                e_charts(renderer="svg", 
+                         backgroundColor = "#ffffff") %>%
                 e_boxplot(FPKM, itemStyle = list(color = "#b8c5f2"), layout = "horizontal") %>% 
                 e_x_axis(type = "category", axisLabel =list(rotate = 45, fontSize = 8) ) %>% 
                 e_y_axis(name = "log10(FPKM + 1)", 
@@ -130,7 +136,8 @@ brainrnaseq_server <- function(id) {
                          nameLocation = "middle", 
                          nameGap = 40
                          ) %>% 
-                e_title("Brain RNA-Seq in Human", subtext = "Gene Expression values ( log10(FPKM + 1)) Per Cell Type of Input Genes") %>% 
+                e_title("Brain RNA-Seq in Human", subtext = "Gene Expression values ( log10(FPKM + 1)) Per Cell Type of Input Genes", 
+                        backgroundColor = "#ffffff") %>% 
                 e_tooltip() %>% 
                 e_toolbox() %>%
                 e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
@@ -142,7 +149,8 @@ brainrnaseq_server <- function(id) {
               
               bs_res_mice %>% 
                 group_by(CellType) %>% 
-                e_charts(renderer="svg") %>%
+                e_charts(renderer = "svg", 
+                         backgroundColor = "#ffffff") %>%
                 e_boxplot(FPKM, itemStyle = list(color = "#b8c5f2")) %>%
                 e_x_axis(type = "category", axisLabel =list(rotate = 45, fontSize = 6) ) %>% 
                 e_y_axis(name = "log10(FPKM + 1)", 
@@ -150,10 +158,11 @@ brainrnaseq_server <- function(id) {
                          nameLocation = "middle",
                          nameGap = 40
                          ) %>% 
-                e_title("Brain RNA-Seq in Mice", subtext = "Gene Expression values ( log10(FPKM + 1)) Per Cell Type of Input Genes") %>%
+                e_title("Brain RNA-Seq in Mice", subtext = "Gene Expression values ( log10(FPKM + 1)) Per Cell Type of Input Genes", 
+                        backgroundColor = "#ffffff") %>%
                 e_tooltip() %>% 
                 e_toolbox() %>%
-                e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
+                e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>%  
                 e_show_loading()
               
             })
@@ -173,10 +182,12 @@ brainrnaseq_server <- function(id) {
               rbind(all_human_prop) %>% select(CellType, Avg, prob) %>% 
               mutate_if(is.numeric, round, 2) %>% 
               pivot_wider(names_from = Avg, values_from = prob) %>% 
-              e_charts(CellType, renderer="svg") %>% 
+              e_charts(CellType, renderer = "svg", 
+                       backgroundColor = "#ffffff") %>% 
               e_radar(Avg, max = 50) %>% 
               e_radar(Input, max = 50) %>% 
-              e_title("Brain RNA-Seq in Human", subtext = "Proportion of Gene Expression values Per Cell Type") %>%
+              e_title("Brain RNA-Seq in Human", subtext = "Proportion of Gene Expression values Per Cell Type", 
+                      backgroundColor = "#ffffff") %>%
               e_tooltip() %>% 
               e_toolbox() %>%
               e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
@@ -194,10 +205,12 @@ brainrnaseq_server <- function(id) {
               rbind(all_mice_prop) %>% select(CellType, Avg, prob) %>% 
               mutate_if(is.numeric, round, 2) %>% 
               pivot_wider(names_from = Avg, values_from = prob) %>% 
-              e_charts(CellType, renderer="svg") %>% 
+              e_charts(CellType, renderer="svg", 
+                       backgroundColor = "#ffffff") %>% 
               e_radar(Avg, max = 50) %>% 
               e_radar(Input, max = 50) %>% 
-              e_title("Brain RNA-Seq in Mice", subtext = "Proportion of Gene Expression values Per Cell Type") %>%
+              e_title("Brain RNA-Seq in Mice", subtext = "Proportion of Gene Expression values Per Cell Type", 
+                      backgroundColor = "#ffffff") %>%
               e_tooltip() %>% 
               e_toolbox() %>%
               e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 

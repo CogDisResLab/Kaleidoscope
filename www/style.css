@@ -1250,7 +1250,7 @@ General Styles - Owlcarousel
   transition: background, padding 0.4s ease-in-out 0s;
 }
 
-.navbar a {
+.navbar-custom a {
   transition: color 0.125s ease-in-out 0s;
 }
 
@@ -1262,7 +1262,7 @@ General Styles - Owlcarousel
   box-shadow: none;
 }
 
-.navbar-custom .navbar-brand {
+.navbar-custom .navbar-custom-brand {
   letter-spacing: 4px;
   font-weight: 400;
   font-size: 22px;
@@ -1326,7 +1326,7 @@ General Styles - Owlcarousel
   -moz-osx-font-smoothing: grayscale;
 }
 
-.navbar-custom .navbar-toggle .icon-bar {
+.navbar-custom .navbar-custom-toggle .icon-bar {
   background: #fff;
 }
 
@@ -2739,7 +2739,7 @@ Google map
 	Responsive Styles - Media Queries
 --------------------------------------------------------------*/
 @media (min-width: 768px) {
-  .navbar-transparent {
+  .navbar-custom-transparent {
     background: transparent;
     padding-bottom: 15px;
     padding-top: 15px;
@@ -2767,7 +2767,7 @@ Google map
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  .navbar-right .dropdown-menu {
+  .navbar-custom-right .dropdown-menu {
     right: auto;
     left: 0;
   }
@@ -2821,7 +2821,7 @@ Google map
 
 @media (max-width: 767px) {
   /* Navbar */
-  .navbar-custom .navbar-nav {
+  .navbar-custom .navbar-custom-nav {
     letter-spacing: 3px;
     margin-top: 1px;
     margin-bottom: 0;
@@ -2829,12 +2829,12 @@ Google map
   .navbar-custom li > a:hover {
     background: rgba(255, 255, 255, 0.1) !important;
   }
-  .navbar-custom .navbar-nav .open .dropdown-menu .dropdown-header,
-  .navbar-custom .navbar-nav .open .dropdown-menu > li > a {
+  .navbar-custom .navbar-custom-nav .open .dropdown-menu .dropdown-header,
+  .navbar-custom .navbar-custom-nav .open .dropdown-menu > li > a {
     padding: 10px 25px;
   }
-  .navbar-custom .navbar-nav .open .dropdown-menu .dropdown-menu .dropdown-header,
-  .navbar-custom .navbar-nav .open .dropdown-menu .dropdown-menu > li > a {
+  .navbar-custom .navbar-custom-nav .open .dropdown-menu .dropdown-menu .dropdown-header,
+  .navbar-custom .navbar-custom-nav .open .dropdown-menu .dropdown-menu > li > a {
     padding: 10px 35px;
   }
   .navbar-custom li a,
@@ -2852,31 +2852,31 @@ Google map
     content: "\f106";
   }
   /* Shop navbar */
-  .navbar-custom .navbar-nav > li:last-child.navbar-cart > a {
+  .navbar-custom .navbar-custom-nav > li:last-child.navbar-custom-cart > a {
     padding-left: 15px;
   }
   .navbar-custom .cart-item-number {
     display: none;
   }
-  .navbar-custom .navbar-cart > a:after {
+  .navbar-custom .navbar-custom-cart > a:after {
     content: "\f107";
   }
-  .navbar-custom .navbar-cart-item a {
+  .navbar-custom .navbar-custom-cart-item a {
     border: 0 !important;
   }
   .dropdown-menu.cart-list {
     text-align: left;
     border-bottom: 1px solid rgba(73, 71, 71, 0.15) !important;
   }
-  .navbar-cart-item {
+  .navbar-custom-cart-item {
     border: none;
     border-bottom: 1px solid rgba(73, 71, 71, 0.15) !important;
     padding-bottom: 10px;
   }
-  .navbar-cart-img {
+  .navbar-custom-cart-img {
     display: none;
   }
-  .navbar-cart-title {
+  .navbar-custom-cart-title {
     white-space: normal;
     padding: 0;
     margin-left: 0;

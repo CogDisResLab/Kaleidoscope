@@ -3,7 +3,9 @@ lookup_ui <- function(id) {
 
   tagList(
     fluidRow(
-      column(width = 12,  geneInputUI(ns("genes")),hr()), 
+      column(width = 12,  geneInputUI(ns("genes")),
+             #actionButton(ns("use_l000"),label = "L1000 Genes"),
+             hr()), 
       #shinydashboard::box(status = "info", width = 12,
       column(width = 3,
              pickerInput(inputId=ns("dbs1"),label="Schizophrenia",choices="",multiple = TRUE,options = list(`actions-box` = TRUE, `selected-text-format` = "count > 1")),
@@ -73,20 +75,20 @@ lookup_ui <- function(id) {
                                   )
                            )
                            )
-                           ),
-                  tabPanel("Enrichment",
-                           fluidRow(
-                             column(width = 3, offset = 1, align="center", hidden(sliderInput(ns("slider2"), label = "Top Geneset", min = 1, max = 50, value = 20, step = 1))),
-                             column(width = 3, offset = 3, align="center", hidden(sliderInput(ns("slider3"), label = "Similarity Cutoff", min = 0.1, max = 1, value = 0.2, step = 0.1))),
-                             column(width = 6,
-                                    plotOutput(ns("plot5"), height = "500")
-                             ),
-                             column(width = 6, 
-                                    visNetwork::visNetworkOutput(ns("geneset_network"), height = "500")
-                             ),
-                             column(width = 12, reactableOutput(ns("genset_table")))
                            )
-                           )
+                  # tabPanel("Enrichment",
+                  #          fluidRow(
+                  #            column(width = 3, offset = 1, align="center", hidden(sliderInput(ns("slider2"), label = "Top Geneset", min = 1, max = 50, value = 20, step = 1))),
+                  #            column(width = 3, offset = 3, align="center", hidden(sliderInput(ns("slider3"), label = "Similarity Cutoff", min = 0.1, max = 1, value = 0.2, step = 0.1))),
+                  #            column(width = 6,
+                  #                   plotOutput(ns("plot5"), height = "500")
+                  #            ),
+                  #            column(width = 6, 
+                  #                   visNetwork::visNetworkOutput(ns("geneset_network"), height = "500")
+                  #            ),
+                  #            column(width = 12, reactableOutput(ns("genset_table")))
+                  #          )
+                  #          )
                   
                   ),
              )
@@ -126,8 +128,15 @@ lookup_server <- function(id) {
                           color = transparent(.5)
       )
       
+      
+      
       genes_ids <- geneOutput("genes")
-
+      
+      # observeEvent(input$use_l000, {
+      #   updateTextInput(session,id = "lookupTab-genes-gene_input",value = paste(l1000_genes, collapse = ","))
+      #   #genes_ids$genes() <- paste(l1000_genes, collapse = ",")
+      # })
+      
       observeEvent(genes_ids$info_btn(),{
         shinyalert(title = NULL, text = lookup_info_html, html = T, closeOnEsc = T, closeOnClickOutside = T)
 
@@ -171,14 +180,14 @@ lookup_server <- function(id) {
             genes <- ""
           } else {}
           
-          genesets_ds <- c(paste0(datasets_selected, "_all"), paste0(datasets_selected, "_up"), paste0(datasets_selected, "_down"))
+          #genesets_ds <- c(paste0(datasets_selected, "_all"), paste0(datasets_selected, "_up"), paste0(datasets_selected, "_down"))
           
           
           look_res <<- withProgress(message = "connecting to KS database ...", {
             
             list(
-              lookup_df = ks_lookup(genes = genes, datasets = datasets_selected),
-              geneset_df = ks_lookup_geneset(genes = genes, datasets = genesets_ds)
+              lookup_df = ks_lookup(genes = genes, datasets = datasets_selected)
+              #geneset_df = ks_lookup_geneset(genes = genes, datasets = genesets_ds)
             )
             
           })
@@ -297,47 +306,6 @@ lookup_server <- function(id) {
               
             })
             
-            
-            output$geneset_network <- visNetwork::renderVisNetwork({
-              w_net$show()
-              
-              on.exit({
-                w_net$hide()
-              })
-              look_res$geneset_df %>% hypeR::hyp_emap(similarity_cutoff = input$slider3, title = "Enrichment Network (Nodes = genesets, edges= similarity between genesets, color= enrichment significance - FDR ) - zoom in to reveal the names")
-              
-            })
-            
-            
-            
-            output$plot5 <- renderPlot({
-              
-              w_net$show()
-              
-              on.exit({
-                w_net$hide()
-              })
-              
-              look_res$geneset_df %>% hypeR::hyp_dots(top = input$slider2, title = "Gene Set Enrichment Analysis (FDR)") + 
-                labs(y = "")
-              
-            })
-            
-            output$genset_table <- renderReactable({
-              
-              look_res$geneset_df$as.data.frame() %>% 
-                select(-background) %>% as_tibble() %>%
-                rename(Geneset = label, Geneset_Size = geneset, `P-Value` = pval, 
-                       Input_Size = signature, FDR = fdr, 
-                       Overlap = overlap, Hits = hits) %>% 
-                reactable::reactable(searchable = TRUE,
-                                     striped = TRUE,
-                                     bordered = TRUE)
-              
-            })
-            
-            
-            
             output$heatmap_plot <- plotly::renderPlotly({
               
               look_res$lookup_df %>% select(HGNC_Symbol, Log2FC, DataSet) %>%
@@ -364,7 +332,7 @@ lookup_server <- function(id) {
                 plotly::config(
                   toImageButtonOptions = list(
                     format = "svg",
-                    filename = "gtex_hm"
+                    filename = "lookup_hm"
                   )
                 )
               
@@ -372,6 +340,49 @@ lookup_server <- function(id) {
               
               
             })
+            
+            
+            # output$geneset_network <- visNetwork::renderVisNetwork({
+            #   w_net$show()
+            #   
+            #   on.exit({
+            #     w_net$hide()
+            #   })
+            #   look_res$geneset_df %>% hypeR::hyp_emap(similarity_cutoff = input$slider3, title = "Enrichment Network (Nodes = genesets, edges= similarity between genesets, color= enrichment significance - FDR ) - zoom in to reveal the names")
+            #   
+            # })
+            # 
+            # 
+            # 
+            # output$plot5 <- renderPlot({
+            #   
+            #   w_net$show()
+            #   
+            #   on.exit({
+            #     w_net$hide()
+            #   })
+            #   
+            #   look_res$geneset_df %>% hypeR::hyp_dots(top = input$slider2, title = "Gene Set Enrichment Analysis (FDR)") + 
+            #     labs(y = "")
+            #   
+            # })
+            # 
+            # output$genset_table <- renderReactable({
+            #   
+            #   look_res$geneset_df$as.data.frame() %>% 
+            #     select(-background) %>% as_tibble() %>%
+            #     rename(Geneset = label, Geneset_Size = geneset, `P-Value` = pval, 
+            #            Input_Size = signature, FDR = fdr, 
+            #            Overlap = overlap, Hits = hits) %>% 
+            #     reactable::reactable(searchable = TRUE,
+            #                          striped = TRUE,
+            #                          bordered = TRUE)
+            #   
+            # })
+            
+            
+            
+        
             
             shinyjs::show("lookup_tabset_div")
             shinyjs::show("table")

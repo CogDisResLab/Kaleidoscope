@@ -46,16 +46,16 @@ report_server <- function(id) {
         },
         content = function(file) {
 
-          waiter_show(color = "#bdbaba", 
+          waiter_show(color = "#bdbaba",
                       html = hostess$get_loader(
                         text_color = "black",
                         center_page = TRUE,
-                        svg = "assets/images/ks_new_logo.svg", 
-                        progress_type = "fill", 
+                        svg = "assets/images/ks_new_logo.svg",
+                        progress_type = "fill",
                         fill_direction = sample(c("btt"), 1)
                         )
                       )
-          
+
           hostess$start()
 
           input_genes <- process_gene_input(input$genes)
@@ -98,12 +98,19 @@ report_server <- function(id) {
           #        params = param_list,
           #        envir = new.env())
           # )
-          rmarkdown::render(input = temp_path1,
-                            #output_format = rmarkdown::html_document(),
-                            output_file = file, # this lets the rendered report be accessed by download handler
-                            params = param_list,
-                            envir = new.env()
-          )
+
+            rmarkdown::render(input = temp_path1,
+                              #output_format = rmarkdown::html_document(),
+                              output_file = file, # this lets the rendered report be accessed by download handler
+                              params = param_list,
+                              envir = new.env()
+            ) 
+          # rmarkdown::render(input = temp_path1,
+          #                   #output_format = rmarkdown::html_document(),
+          #                   output_file = file, # this lets the rendered report be accessed by download handler
+          #                   params = param_list,
+          #                   envir = new.env()
+          # )
           
           hostess$close()
           waiter_hide()

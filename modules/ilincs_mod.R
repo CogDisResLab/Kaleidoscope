@@ -57,10 +57,9 @@ ilincs_server <- function(id) {
               count(Gene, Type) %>% 
               group_by(Type) %>% 
               arrange(Type,n) %>% 
-              e_charts(Gene, reorder = F, renderer="svg") %>% 
+              e_charts(Gene, reorder = F,renderer="svg") %>% 
               e_bar(n, position = "right") %>% 
               e_flip_coords() %>% 
-              #e_labels(position = "right") %>% 
               e_title("iLINCS Signatures", subtext = "Number of gene knockdown or over expression signatures") %>% 
               e_toolbox() %>%
               e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>% 
