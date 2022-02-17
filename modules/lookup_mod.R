@@ -18,7 +18,7 @@ lookup_ui <- function(id) {
              pickerInput(inputId=ns("dbs6"),label="Alzheimer's Disease",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1"))
       ),
       column(width = 3,
-             pickerInput(inputId=ns("dbs7"),label="Insulin Signaling Inhibition",choices="",  multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
+             #pickerInput(inputId=ns("dbs7"),label="Insulin Signaling Inhibition",choices="",  multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
              pickerInput(inputId=ns("dbs8"),label="Bipolar Disorder",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
              pickerInput(inputId=ns("dbs9"),label="Aging",choices="",  multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1"))
       ),
@@ -109,10 +109,10 @@ lookup_server <- function(id) {
       updatePickerInput(session, "dbs4", choices = filter(ks_datasets, Group == "AP") %>% pull(DataSet))
       updatePickerInput(session, "dbs5", choices = filter(ks_datasets, Group == "ATD") %>% pull(DataSet))
       updatePickerInput(session, "dbs6", choices = filter(ks_datasets, Group == "AD") %>% pull(DataSet))
-      updatePickerInput(session, "dbs7", choices = filter(ks_datasets, Group == "Ins") %>% pull(DataSet))
+      #updatePickerInput(session, "dbs7", choices = filter(ks_datasets, Group == "Ins") %>% pull(DataSet))
       updatePickerInput(session, "dbs8", choices = filter(ks_datasets, Group == "BPD") %>% pull(DataSet))
       updatePickerInput(session, "dbs9", choices = filter(ks_datasets, Group == "Aging") %>% pull(DataSet))
-      updatePickerInput(session, "dbs10", choices = filter(ks_datasets, Group == "Microcysti") %>% pull(DataSet))
+      updatePickerInput(session, "dbs10", choices = filter(ks_datasets, Group == "MCLR") %>% pull(DataSet))
       updatePickerInput(session, "dbs11", choices = filter(ks_datasets, Group == "KID") %>% pull(DataSet))
       updatePickerInput(session, "dbs12", choices = filter(ks_datasets, Group == "MYO") %>% pull(DataSet))
       updatePickerInput(session, "dbs13", choices = filter(ks_datasets, Group %in% c("COVID", "Other", "MB")) %>% pull(DataSet))
@@ -168,7 +168,8 @@ lookup_server <- function(id) {
         genes_raw <- isolate(genes_ids$genes())
         #req(genes)
 
-        datasets_selected <- c(input$dbs1,input$dbs2, input$dbs3, input$dbs4, input$dbs5, input$dbs6, input$dbs7, input$dbs8, input$dbs9, input$dbs10, input$dbs11, input$dbs12, input$dbs13)
+        datasets_selected <- c(input$dbs1,input$dbs2, input$dbs3, input$dbs4, input$dbs5, input$dbs6, #input$dbs7, 
+                               input$dbs8, input$dbs9, input$dbs10, input$dbs11, input$dbs12, input$dbs13)
         #req(datasets_selected)
         
         if(!any(all(trimws(genes_raw) == "") | is.null(datasets_selected))){

@@ -59,6 +59,7 @@ my_db <- dbPool(
   password = Sys.getenv("ks_pass")
 )
 
+
 conn <- GraphqlClient$new(url = 'https://pharos-api.ncats.io/graphql')
 
 
