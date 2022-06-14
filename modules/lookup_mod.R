@@ -467,29 +467,29 @@ ks_lookup <- function(genes, datasets, db = my_db) {
 }
 
 
-ks_lookup_geneset <- function(genes, datasets, db = my_db){
-  suppressWarnings({
-    tbl(my_db, "lookup_genesets") %>% filter(DataSet %in% datasets) %>% 
-      collect()  -> table_res
-    
-    table_res %>% 
-      select(DataSet, HGNC_Symbol) %>% 
-      group_by(DataSet) %>% 
-      summarize(geneset=list(unique(HGNC_Symbol))) %>% 
-      deframe() -> gensets_list
-    
-    table_res <- hypeR::hypeR(genes, gensets_list, test="hypergeometric", background=23467, fdr=1)
-    
-  })
-  
-  if(T) {
-    return(table_res)
-  }
-  
-  else {
-    return(NULL)
-  }
-}
+# ks_lookup_geneset <- function(genes, datasets, db = my_db){
+#   suppressWarnings({
+#     tbl(my_db, "lookup_genesets") %>% filter(DataSet %in% datasets) %>% 
+#       collect()  -> table_res
+#     
+#     table_res %>% 
+#       select(DataSet, HGNC_Symbol) %>% 
+#       group_by(DataSet) %>% 
+#       summarize(geneset=list(unique(HGNC_Symbol))) %>% 
+#       deframe() -> gensets_list
+#     
+#     table_res <- hypeR::hypeR(genes, gensets_list, test="hypergeometric", background=23467, fdr=1)
+#     
+#   })
+#   
+#   if(T) {
+#     return(table_res)
+#   }
+#   
+#   else {
+#     return(NULL)
+#   }
+# }
 
 
 lookup_info_html <- HTML('<div class="features-icon"><span class="icon-search"></span></div>
