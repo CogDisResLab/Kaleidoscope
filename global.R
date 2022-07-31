@@ -54,9 +54,9 @@ ba_all_human_avg <- readRDS("modules/brainatlas_avg_all_genes.RDS")
 my_db <- dbPool(
   RMySQL::MySQL(), 
   dbname = "ksdatabase_new",
-  host = Sys.getenv("ks_host"),
-  username = Sys.getenv("ks_username"),
-  password = Sys.getenv("ks_pass")
+  host = Sys.getenv("ks_host_new"),
+  username = Sys.getenv("ks_username_new"),
+  password = Sys.getenv("ks_pass_new")
 )
 
 
