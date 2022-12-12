@@ -10,30 +10,28 @@ lookup_ui <- function(id) {
       column(width = 3,
              pickerInput(inputId=ns("dbs1"),label="Schizophrenia",choices="",multiple = TRUE,options = list(`actions-box` = TRUE, `selected-text-format` = "count > 1")),
              pickerInput(inputId=ns("dbs2"),label="MDD",choices="",  multiple = T,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
+             pickerInput(inputId=ns("dbs13"),label="Asthma",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
              pickerInput(inputId=ns("dbs3"),label="Dopamine",choices="",  multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1"))
              ),
       column(width = 3,
              pickerInput(inputId=ns("dbs4"),label="Antipsychotics",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
              pickerInput(inputId=ns("dbs5"),label="Antidepressants",choices="",  multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
+             pickerInput(inputId=ns("dbs14"),label="PTSD",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
              pickerInput(inputId=ns("dbs6"),label="Alzheimer's Disease",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1"))
       ),
       column(width = 3,
              pickerInput(inputId=ns("dbs7"),label="Insulin Signaling Inhibition",choices="",  multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
              pickerInput(inputId=ns("dbs8"),label="Bipolar Disorder",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
+             pickerInput(inputId=ns("dbs15"),label="Ketosis",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
              pickerInput(inputId=ns("dbs9"),label="Aging",choices="",  multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1"))
       ),
       column(width = 3,
              pickerInput(inputId=ns("dbs10"),label="Microcystin",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
              pickerInput(inputId=ns("dbs11"),label="Renal DBs",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
-             pickerInput(inputId=ns("dbs12"),label="Myositis",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1"))
+             pickerInput(inputId=ns("dbs12"),label="Myositis",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
+             pickerInput(inputId=ns("dbs16"),label="Other",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1"))
       #)
       ),
-      column(width = 12,
-             pickerInput(inputId=ns("dbs13"),label="Asthma",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
-             pickerInput(inputId=ns("dbs14"),label="PTSD",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
-             pickerInput(inputId=ns("dbs15"),label="Ketosis",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
-             pickerInput(inputId=ns("dbs16"),label="Other",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1"))
-             #)
       ),
       #column(width = 12,
       #hidden(div(ns("lookup_tabset_div"),
