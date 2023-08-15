@@ -18,6 +18,8 @@ library(jsonlite)
 library(reactablefmtr)
 library(NGLVieweR)
 library(shinydashboard)
+library(Hmisc)
+library(corrplot)
 
 # ggplot theme
 theme_set(theme_bw())

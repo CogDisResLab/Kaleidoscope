@@ -80,7 +80,9 @@ lookup_ui <- function(id) {
                                   )
                            )
                            )
-                           )
+                           ),
+                  tabPanel("Correlation", 
+                           plotOutput(ns("CorPlot"), height = "700px"))
                   # tabPanel("Enrichment",
                   #          fluidRow(
                   #            column(width = 3, offset = 1, align="center", hidden(sliderInput(ns("slider2"), label = "Top Geneset", min = 1, max = 50, value = 20, step = 1))),
@@ -347,6 +349,23 @@ lookup_server <- function(id) {
               
               
               
+            })
+            
+            output$CorPlot <- renderPlot({
+              
+              look_res$lookup_df %>% select(HGNC_Symbol, Log2FC, DataSet) %>%
+                pivot_wider(names_from = DataSet, values_from = Log2FC) %>%
+                column_to_rownames("HGNC_Symbol") -> mm
+              
+              if (nrow(mm) > 1 & ncol(mm) > 1 ) {
+                
+                cormatrRes<-rcorr(as.matrix(mm), type = "pearson")
+                cormatrRes$r[cormatrRes$n<5]<-0
+                
+                corrplot(cormatrRes$r, 
+                         tl.col = "black", order = "hclust",
+                         method = "circle",type = "full", tl.cex = 0.5, cl.cex = 0.4)
+              }
             })
             
             
