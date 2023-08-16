@@ -1,38 +1,184 @@
 lookup_ui <- function(id) {
   ns <- NS(id)
-
+  
   tagList(
     fluidRow(
       column(width = 12,  geneInputUI(ns("genes")),
              #actionButton(ns("use_l000"),label = "L1000 Genes"),
-             hr()), 
+             hr()),
       #shinydashboard::box(status = "info", width = 12,
-      column(width = 3,
-             pickerInput(inputId=ns("dbs1"),label="Schizophrenia",choices="",multiple = TRUE,options = list(`actions-box` = TRUE, `selected-text-format` = "count > 1")),
-             pickerInput(inputId=ns("dbs2"),label="MDD",choices="",  multiple = T,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
-             pickerInput(inputId=ns("dbs3"),label="Dopamine",choices="",  multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1"))
-             ),
-      column(width = 3,
-             pickerInput(inputId=ns("dbs4"),label="Antipsychotics",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
-             pickerInput(inputId=ns("dbs5"),label="Antidepressants",choices="",  multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
-             pickerInput(inputId=ns("dbs6"),label="Alzheimer's Disease",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1"))
+      column(
+        width = 3,
+        pickerInput(
+          inputId = ns("dbs1"),
+          label = "Schizophrenia",
+          choices = "",
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `selected-text-format` = "count > 1"
+          )
+        ),
+        pickerInput(
+          inputId = ns("dbs2"),
+          label = "MDD",
+          choices = "",
+          multiple = T,
+          options = list(
+            `actions-box` = TRUE,
+            `selected-text-format` = "count > 1"
+          )
+        ),
+        pickerInput(
+          inputId = ns("dbs13"),
+          label = "Asthma",
+          choices = "",
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `selected-text-format` = "count > 1"
+          )
+        ),
+        pickerInput(
+          inputId = ns("dbs3"),
+          label = "Dopamine",
+          choices = "",
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `selected-text-format` = "count > 1"
+          )
+        )
       ),
-      column(width = 3,
-             pickerInput(inputId=ns("dbs7"),label="Insulin Signaling Inhibition",choices="",  multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
-             pickerInput(inputId=ns("dbs8"),label="Bipolar Disorder",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
-             pickerInput(inputId=ns("dbs9"),label="Aging",choices="",  multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1"))
+      column(
+        width = 3,
+        pickerInput(
+          inputId = ns("dbs4"),
+          label = "Antipsychotics",
+          choices = "",
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `selected-text-format` = "count > 1"
+          )
+        ),
+        pickerInput(
+          inputId = ns("dbs5"),
+          label = "Antidepressants",
+          choices = "",
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `selected-text-format` = "count > 1"
+          )
+        ),
+        pickerInput(
+          inputId = ns("dbs14"),
+          label = "PTSD",
+          choices = "",
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `selected-text-format` = "count > 1"
+          )
+        ),
+        pickerInput(
+          inputId = ns("dbs6"),
+          label = "Alzheimer's Disease",
+          choices = "",
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `selected-text-format` = "count > 1"
+          )
+        )
       ),
-      column(width = 3,
-             pickerInput(inputId=ns("dbs10"),label="Microcystin",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
-             pickerInput(inputId=ns("dbs11"),label="Renal DBs",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
-             pickerInput(inputId=ns("dbs12"),label="Myositis",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1"))
-      #)
+      column(
+        width = 3,
+        pickerInput(
+          inputId = ns("dbs7"),
+          label = "Insulin Signaling Inhibition",
+          choices = "",
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `selected-text-format` = "count > 1"
+          )
+        ),
+        pickerInput(
+          inputId = ns("dbs8"),
+          label = "Bipolar Disorder",
+          choices = "",
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `selected-text-format` = "count > 1"
+          )
+        ),
+        pickerInput(
+          inputId = ns("dbs15"),
+          label = "Ketosis",
+          choices = "",
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `selected-text-format` = "count > 1"
+          )
+        ),
+        pickerInput(
+          inputId = ns("dbs9"),
+          label = "Aging",
+          choices = "",
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `selected-text-format` = "count > 1"
+          )
+        )
       ),
-      column(width = 12,
-             pickerInput(inputId=ns("dbs13"),label="Asthma",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
-             pickerInput(inputId=ns("dbs14"),label="PTSD",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1")),
-             pickerInput(inputId=ns("dbs15"),label="Other",choices="", multiple = TRUE,options = list(`actions-box` = TRUE,`selected-text-format` = "count > 1"))
-             #)
+      column(
+        width = 3,
+        pickerInput(
+          inputId = ns("dbs10"),
+          label = "Microcystin",
+          choices = "",
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `selected-text-format` = "count > 1"
+          )
+        ),
+        pickerInput(
+          inputId = ns("dbs11"),
+          label = "Renal DBs",
+          choices = "",
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `selected-text-format` = "count > 1"
+          )
+        ),
+        pickerInput(
+          inputId = ns("dbs12"),
+          label = "Myositis",
+          choices = "",
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `selected-text-format` = "count > 1"
+          )
+        ),
+        pickerInput(
+          inputId = ns("dbs16"),
+          label = "Other",
+          choices = "",
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `selected-text-format` = "count > 1"
+          )
+        )
+        #)
       ),
       #column(width = 12,
       #hidden(div(ns("lookup_tabset_div"),
@@ -472,14 +618,13 @@ lookup_server <- function(id) {
 
 
 ks_lookup <- function(genes, datasets, db = my_db) {
-  
   suppressWarnings({
-    tbl(my_db, "lookup_updated_annotated") %>% filter(HGNC_Symbol %in% genes, DataSet %in% datasets) %>% 
-      collect() %>% 
+    tbl(my_db, "lookup_updated_annotated") %>% filter(HGNC_Symbol %in% genes, DataSet %in% datasets) %>%
+      collect() %>%
       distinct(HGNC_Symbol, DataSet, .keep_all = T) -> table_res
   })
   
-  if(nrow(table_res) > 0) {
+  if (nrow(table_res) > 0) {
     return(table_res)
   }
   
@@ -492,45 +637,48 @@ ks_lookup <- function(genes, datasets, db = my_db) {
 
 # ks_lookup_geneset <- function(genes, datasets, db = my_db){
 #   suppressWarnings({
-#     tbl(my_db, "lookup_genesets") %>% filter(DataSet %in% datasets) %>% 
+#     tbl(my_db, "lookup_genesets") %>% filter(DataSet %in% datasets) %>%
 #       collect()  -> table_res
-#     
-#     table_res %>% 
-#       select(DataSet, HGNC_Symbol) %>% 
-#       group_by(DataSet) %>% 
-#       summarize(geneset=list(unique(HGNC_Symbol))) %>% 
+#
+#     table_res %>%
+#       select(DataSet, HGNC_Symbol) %>%
+#       group_by(DataSet) %>%
+#       summarize(geneset=list(unique(HGNC_Symbol))) %>%
 #       deframe() -> gensets_list
-#     
+#
 #     table_res <- hypeR::hypeR(genes, gensets_list, test="hypergeometric", background=23467, fdr=1)
-#     
+#
 #   })
-#   
+#
 #   if(T) {
 #     return(table_res)
 #   }
-#   
+#
 #   else {
 #     return(NULL)
 #   }
 # }
 
 
-lookup_info_html <- HTML('<div class="features-icon"><span class="icon-search"></span></div>
+lookup_info_html <-
+  HTML(
+    '<div class="features-icon"><span class="icon-search"></span></div>
                   <h3 class="features-title font-alt">Lookup</h3>
-                  <p>Differential gene expression signatures across different diseases and drug treatments. Disease/Drug based modules of previously published studies (RNAseq and microarray) curated and harmonized to be used as 
+                  <p>Differential gene expression signatures across different diseases and drug treatments. Disease/Drug based modules of previously published studies (RNAseq and microarray) curated and harmonized to be used as
 lookup replication studies.</p>
                          <h3 class = "features-title font-alt">Resources</h3>
                          <p>
                          <a href="https://www.ncbi.nlm.nih.gov/geo/" target="_blank" rel="noopener noreferrer">GEO</a>
                          </p>
-                         ')
+                         '
+  )
 
 
 # BuYlRd <- function(x) rgb(colorRamp(c("#7fb7d7", "#ffffbf", "#fc8d59"))(x), maxColorValue = 255)
-# 
-# look_res %>% select(HGNC_Symbol, Log2FC, DataSet) %>% 
-#   mutate(Log2FC = ifelse(is.na(Log2FC), 0, Log2FC)) %>% 
-#   pivot_wider(names_from = DataSet, values_from = Log2FC, values_fill = 0) %>% 
+#
+# look_res %>% select(HGNC_Symbol, Log2FC, DataSet) %>%
+#   mutate(Log2FC = ifelse(is.na(Log2FC), 0, Log2FC)) %>%
+#   pivot_wider(names_from = DataSet, values_from = Log2FC, values_fill = 0) %>%
 #   reactable(searchable = TRUE,
 #             striped = TRUE,
 #             bordered = TRUE,
@@ -543,18 +691,19 @@ lookup replication studies.</p>
 #               format = colFormat(digits = 1),
 #               minWidth = 50
 #             )
-#             
+#
 #             )
-# 
+#
 # BuYlRd(1)
 
 
-matrix_rescale<-function(matrix, min = -2, max = 2){
+matrix_rescale <- function(matrix, min = -2, max = 2) {
   transformedmatrix <- matrix
   transformedmatrix[is.na(transformedmatrix)] = 0
-  transformedmatrix <- transformedmatrix[apply(transformedmatrix, 1, var) != 0,,drop = F] 
-  transformedmatrix[transformedmatrix>max] = max 
-  transformedmatrix[transformedmatrix<min] = min 
+  transformedmatrix <-
+    transformedmatrix[apply(transformedmatrix, 1, var) != 0, , drop = F]
+  transformedmatrix[transformedmatrix > max] = max
+  transformedmatrix[transformedmatrix < min] = min
   return(transformedmatrix)
 }
 
@@ -564,14 +713,14 @@ matrix_rescale<-function(matrix, min = -2, max = 2){
 #   group_by(HGNC_Symbol) %>%
 #   summarise(Upregulated = sum(Log2FC > 0.2),
 #             Downregulated = sum(Log2FC< (02 * -1))) %>%
-#   mutate(Downregulated = -4) %>% 
+#   mutate(Downregulated = -4) %>%
 #   #pivot_longer(Upregulated:Downregulated, names_to = "Type") %>%
 #   #group_by(Type) %>%
 #   e_charts(x = HGNC_Symbol) %>%
 #   e_bar(Upregulated, stack = "grp") %>%
 #   e_bar(Downregulated, stack = "grp2", x_index = 1) %>%
-#   e_x_axis(index = 1, inverse = T, formatter = abs("value")) %>% 
-#   e_x_axis(index = 0, inverse = F) %>% 
+#   e_x_axis(index = 1, inverse = T, formatter = abs("value")) %>%
+#   e_x_axis(index = 0, inverse = F) %>%
 #   e_flip_coords() %>%
 #   e_grid(
 #     left = 100, # pixels
@@ -581,4 +730,3 @@ matrix_rescale<-function(matrix, min = -2, max = 2){
 #   e_toolbox() %>%
 #   e_toolbox_feature(feature = c("saveAsImage", "dataView")) %>%
 #   e_tooltip()
-
