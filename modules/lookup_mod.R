@@ -357,15 +357,19 @@ lookup_server <- function(id) {
                 pivot_wider(names_from = DataSet, values_from = Log2FC) %>%
                 column_to_rownames("HGNC_Symbol") -> mm
               
-              if (nrow(mm) > 1 & ncol(mm) > 1 ) {
-                
-                cormatrRes<-rcorr(as.matrix(mm), type = "pearson")
-                cormatrRes$r[cormatrRes$n<5]<-0
-                
-                corrplot(cormatrRes$r, 
-                         tl.col = "black", order = "hclust",
-                         method = "circle",type = "full", tl.cex = 0.5, cl.cex = 0.4)
-              }
+              shiny::validate(
+                need(nrow(mm) > 4, "    At least five targets are needed to run a correlation analysis"),
+                need(ncol(mm) > 1, "    At least two datasets must be selected to run a correlation analysis")
+              )
+              
+              cormatrRes<-rcorr(as.matrix(mm), type = "pearson")
+              # if observations are less than 5, assign NA
+              cormatrRes$r[cormatrRes$n<5]<-NA
+              
+              corrplot(cormatrRes$r, 
+                       tl.col = "black", order = "hclust",
+                       method = "circle",type = "full", tl.cex = 0.5, cl.cex = 0.4)
+              
             })
             
             
