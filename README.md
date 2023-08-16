@@ -3,10 +3,10 @@
 Kaleidoscope provides easy access to several databases and tools under a
 unified user interface to explore research questions in silico. The web
 application is open-source and freely available at
-<https://kalganem.shinyapps.io/Kaleidoscope/>. This application
-streamlines the process of in silico data exploration for users and
-expands the efficient use of these tools to stakeholders without
-specific bioinformatics expertise.
+<https://cdrl.shinyapps.io/Kaleidoscope/>. This application streamlines
+the process of in silico data exploration for users and expands the
+efficient use of these tools to stakeholders without specific
+bioinformatics expertise.
 
 ## Aims
 
@@ -25,7 +25,11 @@ offering the option of uploading user-defined datasets.
 
 ## Workflow
 
-![Kaleidoscope Workflow](www/assets/images/KS_WorkflowFigure.webp)
+<figure>
+<img src="www/assets/images/KS_WorkflowFigure.webp"
+alt="Kaleidoscope Workflow" />
+<figcaption aria-hidden="true">Kaleidoscope Workflow</figcaption>
+</figure>
 
 ## Interface
 

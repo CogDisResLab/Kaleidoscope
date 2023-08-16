@@ -1,6 +1,6 @@
 ---
 title: "Intro"
-author: "Khaled Alganem"
+author: "Cogntive Disorders Research Lab"
 date: "1/26/2021"
 output:
   md_document:
