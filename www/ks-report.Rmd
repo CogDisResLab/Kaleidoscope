@@ -1,11 +1,9 @@
 ---
 title: |
-  ![](ks_new_logo.svg){width=1in}
   Kaleidoscope Report
 author: "The Cognitive Disorders Research Laboratory (CDRL)"
 date: "`r format(Sys.time(), '%d %B, %Y - %H:%M:%S %Z')`"
 output: 
-  pdf_document:
   html_document:
     toc: true
     toc_depth: 2
