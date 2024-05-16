@@ -12,8 +12,8 @@ report_ui <- function(id) {
     fluidRow(
      column(width = 2, 
             textInput(ns("genes"), "Enter gene target(s) (HGNC Symbols) separated by commas", placeholder = "e.g. AKT1, NRXN1"),
-            downloadButton(ns("dl"), label = "Generate Report")
-
+            downloadButton(ns("dl"), label = "Generate HTML Report"),
+            downloadButton(ns("dlpdf"), label = "Generate PDF Report")
             ),
      column(width = 10, 
             hostess_loader("load", text_color = "black",
@@ -130,11 +130,11 @@ report_pdf_server <- function(id) {
       
       hostess <- Hostess$new("loader", infinite = TRUE, min = 20)
       
-      output$dl <- downloadHandler(
+      output$dlpdf <- downloadHandler(
 
         # Create a file name using the response ID
         filename = function() {
-          paste0(Sys.time(), "-KS-Report.html")
+          paste0(Sys.time(), "-KS-Report.pdf")
         },
         content = function(file) {
 
@@ -163,8 +163,8 @@ report_pdf_server <- function(id) {
           
           else {
 
-          temp_path1 <- file.path(tempdir(), "ks-report.Rmd")
-          file.copy(paste0("www/", "ks-report.Rmd"), temp_path1, overwrite = TRUE)
+          temp_path1 <- file.path(tempdir(), "ks-report-pdf.Rmd")
+          file.copy(paste0("www/", "ks-report-pdf.Rmd"), temp_path1, overwrite = TRUE)
           
           temp_path2 <- file.path(tempdir(), "ks_new_logo.svg")
           file.copy(paste0("www/", "assets/images/ks_new_logo.svg"), temp_path2, overwrite = TRUE)
@@ -196,23 +196,14 @@ report_pdf_server <- function(id) {
                               output_file = file, # this lets the rendered report be accessed by download handler
                               params = param_list,
                               envir = new.env()
-            ) 
-          # rmarkdown::render(input = temp_path1,
-          #                   #output_format = rmarkdown::html_document(),
-          #                   output_file = file, # this lets the rendered report be accessed by download handler
-          #                   params = param_list,
-          #                   envir = new.env()
-          # )
+          )
           
           hostess$close()
           waiter_hide()
-          
-        }
+          }
         }
       )
-      
     }
   )
 }
-
 
