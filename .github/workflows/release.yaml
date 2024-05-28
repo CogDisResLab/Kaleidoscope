@@ -22,7 +22,7 @@ jobs:
         strategy:
             matrix:
                 bin:
-                    - {{project-name}}
+                    - kaleidoscope
                 build:
                     # alphabatized by target
                     - os: macOS-latest
