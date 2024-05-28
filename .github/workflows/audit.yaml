@@ -1,0 +1,32 @@
+# SPDX-FileCopyrightText: 2024 Cognitive Disorders Research Lab
+#
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
+
+---
+name: Security Audit
+on:
+    schedule:
+        - cron: 0 0 1,15 * *
+    push:
+        branches:
+            - "*"
+        paths:
+            - '**/Cargo.toml'
+            - '**/Cargo.lock'
+    workflow_dispatch:
+jobs:
+    security_audit:
+        if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+            - name: Install Rust
+              uses: dtolnay/rust-toolchain@stable
+            - name: Install cargo-audit
+              uses: taiki-e/install-action@6261d093c5f01aa48722a4640a5b00a02a358aac # v2.33.7
+              with:
+                tool: cargo-audit
+            - name: Security Audit
+              run: cargo audit

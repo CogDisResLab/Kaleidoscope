@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: 2024 Cognitive Disorders Research Lab
+#
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
+
+---
+name: Deploy to Shuttle
+on:
+    workflow_call:
+
+jobs:
+    shuttle-deployment:
+        name: Shuttle Deployment
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+            - uses: shuttle-hq/deploy-action@main
+              with:
+                deploy-key: ${{ secrets.SHUTTLE_DEPLOY_KEY }}

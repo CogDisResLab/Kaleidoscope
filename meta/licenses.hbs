@@ -1,0 +1,37 @@
+{{!--
+SPDX-FileCopyrightText: 2024 Cognitive Disorders Research Lab
+
+SPDX-License-Identifier: Apache-2.0
+SPDX-License-Identifier: MIT
+--}}
+
+# Third Party Licenses
+
+This page lists the licenses of the projects used in cargo-about.
+
+## Overview of licenses
+
+{{#each overview}}
+- [{{{name}}}](#{{{id}}}) ({{count}})
+{{/each}}
+
+## All license text
+
+{{#each licenses}}
+
+### {{{id}}}
+
+{{{name}}}
+
+#### Used by
+
+{{#each used_by}}
+- [{{{crate.name}}}]({{#if crate.repository}} {{crate.repository}} {{else}} https://crates.io/crates/{{crate.name}} {{/if}}) {{{crate.version}}}
+{{/each}}
+
+#### License
+
+```text
+{{{text}}}
+```
+{{/each}}

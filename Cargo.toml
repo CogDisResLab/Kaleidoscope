@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2024 Cognitive Disorders Research Lab
+#
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
+
+[workspace]
+members = ["backend"]
+resolver = '2'
+
+[profile.release]
+opt-level = 'z' # Optimize for size
+lto = true # Enable link-time optimization
+codegen-units = 1 # Compile the whole crate at once
+panic = "abort" # Abort on panic
+strip = "symbols" # Strip debug symbols
+
+[profile.dev]
+opt-level = 1
+debug = true

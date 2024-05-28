@@ -1,0 +1,48 @@
+# SPDX-FileCopyrightText: 2024 Cognitive Disorders Research Lab
+#
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
+
+[package]
+name = "kaleidoscope"
+version = "1.0.0-next.1"
+edition = "2021"
+readme = "README.md"
+description = ""
+rust-version = "1.75.0"
+repository = "https://github.com/CogDisResLab/kaleidoscope"
+license = "MIT OR Apache-2.0"
+
+[lib]
+name = "kaleidoscope_lib"
+path = "src/kaleidoscope_lib/lib.rs"
+crate-type = ["lib"]
+
+[[bin]]
+name = "kaleidoscope"
+path = "src/kaleidoscope/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["string", "unicode", "derive"] }
+anyhow = { version = "1", features = ["backtrace"] }
+color-eyre = "0.6"
+
+[dev-dependencies]
+rstest = "0.19"
+
+### Specify / Override the specific lints
+
+[lints.rustdoc]
+broken_intra_doc_links = "deny"
+missing_docs = "forbid"
+invalid_rust_codeblocks = "deny"
+redundant_explicit_links = "deny"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+enum_glob_use = "deny"
+pedantic = "deny"
+nursery = "deny"
+unwrap_used = "deny"
