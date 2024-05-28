@@ -18,7 +18,7 @@ on:
 concurrency:
     group: CI
 env:
-    GIST_KEY: {{ dynamic-badge-gist }} # pragma: allowlist secret
+    GIST_KEY: 9b4eb5e54be618d13eee7e67ae220b56 # pragma: allowlist secret
     RUST_BACKTRACE: 1
     MINIMUM_WAIT: 3
     MAXIMUM_WAIT: 10
@@ -35,7 +35,7 @@ jobs:
                     - stable
                     - beta
                     - nightly
-                    - {{ msrv }} # MSRV
+                    - 1.75.0 # MSRV
                 os:
                     - windows
                     - ubuntu
@@ -47,7 +47,7 @@ jobs:
                       logo: ubuntu
                     - os: macos
                       logo: apple
-                    - rust: {{ msrv }} # MSRV
+                    - rust: 1.75.0 # MSRV
                       label: msrv
                     - rust: stable
                       label: stable
