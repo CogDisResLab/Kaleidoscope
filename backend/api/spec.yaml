@@ -1,0 +1,211 @@
+---
+# SPDX-FileCopyrightText: 2024 Cognitive Disorders Research Lab
+#
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
+openapi: 3.0.0
+info:
+    title: Gene Information API
+    version: 1.0.0
+    description: A read-only API that provides information about genes from various sources.
+servers:
+    - url: https://kaleidoscope.cdrlprojects.org/v1
+security:
+    - bearerAuth: []
+paths:
+    /gtex/{geneName}:
+        get:
+            summary: Get GTEx information for a gene
+            parameters:
+                - name: geneName
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                200:
+                    description: Successful response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GtexResponse'
+                404:
+                    description: Gene not found
+                400:
+                    description: Invalid gene name
+                500:
+                    description: Internal server error
+    /string/{geneName}:
+        get:
+            summary: Get STRING information for a gene
+            parameters:
+                - name: geneName
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                '200':
+                    description: Successful response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StringResponse'
+                '404':
+                    description: Gene not found
+    /ilincs/{geneName}:
+        get:
+            summary: Get ILINCS information for a gene
+            parameters:
+                - name: geneName
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                '200':
+                    description: Successful response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/IlincsResponse'
+                '404':
+                    description: Gene not found
+    /braincloud/{geneName}:
+        get:
+            summary: Get Braincloud information for a gene
+            parameters:
+                - name: geneName
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                '200':
+                    description: Successful response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/BraincloudResponse'
+                '404':
+                    description: Gene not found
+    /brainrnaseq/{geneName}:
+        get:
+            summary: Get Brain-RNASeq information for a gene
+            parameters:
+                - name: geneName
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                '200':
+                    description: Successful response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/BrainRnaseqResponse'
+                '404':
+                    description: Gene not found
+    /brainatlas/{geneName}:
+        get:
+            summary: Get BrainAtlas information for a gene
+            parameters:
+                - name: geneName
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                '200':
+                    description: Successful response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/BrainatlasResponse'
+                '404':
+                    description: Gene not found
+    /idg/{geneName}:
+        get:
+            summary: Get IDG information for a gene
+            parameters:
+                - name: geneName
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                200:
+                    description: Successful response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/IdgResponse'
+                404:
+                    description: Gene not found
+components:
+    securitySchemes:
+        bearerAuth:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
+    schemas:
+        GtexResponse:
+            type: object
+            properties:
+                geneName:
+                    type: string
+                expressionData:
+                    type: array
+                    items:
+                    $ref: '#/components/schemas/ExpressionData'
+                tissueType:
+                    type: string
+                tissueExpression:
+                    type: float
+        StringResponse:
+            type: object
+            properties:
+                geneName:
+                    type: string
+                proteinInteractions:
+                    type: array
+                    items:
+                        type: object
+        IlincsResponse:
+            type: object
+            properties:
+                geneName:
+                    type: string
+                perturbationSignatures:
+                    type: array
+                    items:
+                        type: object
+        BrainCloudResponse:
+            type: object
+            properties:
+                geneName:
+                    type: string
+                brainExpression:
+                    type: object
+        BrainRNASeqResponse:
+            type: object
+            properties:
+                geneName:
+                    type: string
+                rnaseqData:
+                    type: object
+        BrainAtlasResponse:
+            type: object
+            properties:
+                geneName:
+                    type: string
+                atlasData:
+                    type: object
+        IDGResponse:
+            type: object
+            properties:
+                geneName:
+                    type: string
+                idgData:
+                    type: object
