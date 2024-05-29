@@ -17,6 +17,8 @@ env:
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
   GITHUB_TOKEN: ${{ secrets.ACTIONS_PAT_GITHUB }}
   BRANCH: ${{ github.ref_name }}
+  PROJECT_ENVIRONMENT: ''
+  STORE_PATH: ''
 
 jobs:
   deploy_book:
