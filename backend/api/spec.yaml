@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-License-Identifier: MIT
-openapi: 3.0.0
+openapi: 3.1.0
 info:
     title: Gene Information API
     version: 1.0.0
@@ -13,6 +13,30 @@ servers:
 security:
     - bearerAuth: []
 paths:
+    /gtex:
+        post:
+        summary: Get GTEx information for multiple genes at once
+        requestBody:
+            required: true
+            content:
+                application/json:
+                    schema:
+                        type: array
+                        items:
+                            type: string
+        responses:
+            200:
+                description: Successful response
+                content:
+                    application/json:
+                        schema:
+                            type: array
+                            items:
+                                $ref: '#/components/schemas/GtexResponse'
+            400:
+                description: Invalid gene name
+            500:
+                description: Internal server error
     /gtex/{geneName}:
         get:
             summary: Get GTEx information for a gene
@@ -35,6 +59,7 @@ paths:
                     description: Invalid gene name
                 500:
                     description: Internal server error
+    # TODO: STRING needs redoing
     /string/{geneName}:
         get:
             summary: Get STRING information for a gene
@@ -63,14 +88,40 @@ paths:
                   schema:
                     type: string
             responses:
-                '200':
+                200:
                     description: Successful response
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/IlincsResponse'
-                '404':
+                                $ref: '#/components/schemas/IlincsSummaryResponse'
+                404:
                     description: Gene not found
+                400:
+                    description: Invalid gene name
+                500:
+                    description: Internal server error
+    /ilincs/{geneName}/signatures:
+        get:
+            summary: Get ILINCS perturbation signatures for a gene
+            parameters:
+                - name: geneName
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                200:
+                    description: Successful response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/IlincsSignatureResponse'
+                404:
+                    description: Gene not found
+                400:
+                    description: Invalid gene name
+                500:
+                    description: Internal server error
     /braincloud/{geneName}:
         get:
             summary: Get Braincloud information for a gene
@@ -89,6 +140,32 @@ paths:
                                 $ref: '#/components/schemas/BraincloudResponse'
                 '404':
                     description: Gene not found
+    /brainrnaseq:
+        post:
+            summary: Get Brain-RNASeq information for multiple genes at once
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: array
+                            items:
+                                type: string
+            responses:
+                200:
+                    description: Successful response
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/BrainRnaseqResponse'
+                400:
+                    description: Invalid gene name
+                404:
+                    description: Gene not found
+                500:
+                    description: Internal server error
     /brainrnaseq/{geneName}:
         get:
             summary: Get Brain-RNASeq information for a gene
@@ -99,14 +176,18 @@ paths:
                   schema:
                     type: string
             responses:
-                '200':
+                200:
                     description: Successful response
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/BrainRnaseqResponse'
-                '404':
+                                $ref: '#/components/schemas/BrainRnaseqData'
+                404:
                     description: Gene not found
+                400:
+                    description: Invalid gene name
+                500:
+                    description: Internal server error
     /brainatlas/{geneName}:
         get:
             summary: Get BrainAtlas information for a gene
@@ -150,6 +231,13 @@ components:
             scheme: bearer
             bearerFormat: JWT
     schemas:
+        GtexTissueData:
+            type: object
+            properties:
+                tissueType:
+                    type: string
+                tissueExpression:
+                    type: float
         GtexResponse:
             type: object
             properties:
@@ -158,11 +246,7 @@ components:
                 expressionData:
                     type: array
                     items:
-                    $ref: '#/components/schemas/ExpressionData'
-                tissueType:
-                    type: string
-                tissueExpression:
-                    type: float
+                    $ref: '#/components/schemas/GtexTissueData'
         StringResponse:
             type: object
             properties:
@@ -172,15 +256,40 @@ components:
                     type: array
                     items:
                         type: object
-        IlincsResponse:
+        IlincsSummaryData:
+            type: object
+            properties:
+                num_overexpression:
+                    type: integer
+                num_knockdown:
+                    type: integer
+        IlincsSummaryResponse:
             type: object
             properties:
                 geneName:
                     type: string
-                perturbationSignatures:
-                    type: array
-                    items:
-                        type: object
+                summaryData:
+                    $ref: '#/components/schemas/IlincsSummaryData'
+        IlincsSignatureData:
+            type: object
+            properties:
+                signature_id:
+                    type: string
+                gene_perturbed:
+                    type: string
+                cell_line:
+                    type: string
+                tissue_type:
+                    type: string
+                perturbation_type:
+                    type: enum
+                    enum:
+                        - overexpression
+                        - knockdown
+        IlincsSignatureResponse:
+            type: array
+            items:
+                $ref: '#/components/schemas/IlincsSignatureData'
         BrainCloudResponse:
             type: object
             properties:
@@ -188,13 +297,24 @@ components:
                     type: string
                 brainExpression:
                     type: object
-        BrainRNASeqResponse:
+        BrainRNASeqData:
             type: object
             properties:
-                geneName:
+                gene_name:
                     type: string
-                rnaseqData:
-                    type: object
+                species:
+                    type: enum
+                    enum:
+                        - human
+                        - mouse
+                cell_type:
+                    type: string
+                expression:
+                    type: float
+        BrainRNASeqResponse:
+            type: array
+            items:
+                $ref: '#/components/schemas/BrainRNASeqData'
         BrainAtlasResponse:
             type: object
             properties:
