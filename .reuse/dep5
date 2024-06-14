@@ -13,6 +13,10 @@ Files: .gitignore
 Copyright: 2023 - 2024 Cognitive Disorders Research Lab
 License: CC0-1.0
 
+Files: .gitattributes
+Copyright: 2023 - 2024 Cognitive Disorders Research Lab
+License: CC0-1.0
+
 Files: guide/.gitignore
 Copyright: 2023 - 2024 Cognitive Disorders Research Lab
 License: CC0-1.0
@@ -60,3 +64,7 @@ License: CC0-1.0
 Files: renovate.json
 Copyright: 2023 - 2024 Cognitive Disorders Research Lab
 License: MIT AND Apache-2.0
+
+Files: datasets/**/*.csv
+Copyright: 2023 - 2024 Cognitive Disorders Research Lab
+LICENSE: MIT AND Apache-2.0
