@@ -146,6 +146,6 @@ repos:
       hooks:
         - id: gitleaks
     - repo: https://github.com/fsfe/reuse-tool
-      rev: v3.0.1
+      rev: v4.0.1
       hooks:
         - id: reuse

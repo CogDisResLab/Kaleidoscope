@@ -1,0 +1,99 @@
+# SPDX-FileCopyrightText: 2024 Cognitive Disorders Research Lab
+#
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: MIT
+
+version = 1
+SPDX-PackageName = "kaleidoscope"
+SPDX-PackageSupplier = "Ali Sajid Imami <asimami@cdrl-ut.org>"
+SPDX-PackageDownloadLocation = "https://github.com/AliSajid/Kaleidoscope"
+
+[[annotations]]
+path = ".gitignore"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 - 2024 Cognitive Disorders Research Lab"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = ".gitattributes"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 - 2024 Cognitive Disorders Research Lab"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = "guide/.gitignore"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 - 2024 Cognitive Disorders Research Lab"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = ".gitleaksignore"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 - 2024 Cognitive Disorders Research Lab"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = ".markdownlintignore"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 - 2024 Cognitive Disorders Research Lab"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = ".markdownlint.json"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 - 2024 Cognitive Disorders Research Lab"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = "Cargo.lock"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 - 2024 Cognitive Disorders Research Lab"
+SPDX-License-Identifier = "MIT AND Apache-2.0"
+
+[[annotations]]
+path = ".secrets.baseline"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 - 2024 Cognitive Disorders Research Lab"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = ".vscode/**.json"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 - 2024 Cognitive Disorders Research Lab"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = "licenses_report.json"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 - 2024 Cognitive Disorders Research Lab"
+SPDX-License-Identifier = "Apache-2.0 AND MIT"
+
+[[annotations]]
+path = ".gitpod.Dockerfile"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 - 2024 Cognitive Disorders Research Lab"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = "meta/vale-styles/config/**/**.txt"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 - 2024 Cognitive Disorders Research Lab"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = "CHANGELOG.md"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 - 2024 Cognitive Disorders Research Lab"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = "renovate.json"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 - 2024 Cognitive Disorders Research Lab"
+SPDX-License-Identifier = "MIT AND Apache-2.0"
+
+[[annotations]]
+path = "datasets/**/**.csv"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 - 2024 Cognitive Disorders Research Lab"
+SPDX-License-Identifier = "MIT AND Apache-2.0"
