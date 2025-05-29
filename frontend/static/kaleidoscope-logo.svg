@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 1000 1000">
+  <defs>
+    <style>
+      .cls-1{fill:none;stroke:red;stroke-miterlimit:10;stroke-width:4px}
+    </style>
+  </defs>
+  <path d="M500 667v86M548 727h25" class="cls-1"/>
+  <circle cx="500.5" cy="764.5" r="12.5" class="cls-1"/>
+  <path d="M548 638v90" class="cls-1"/>
+  <circle cx="585.5" cy="726.5" r="12.5" class="cls-1"/>
+  <path d="M452 727h-25M452 638v90" class="cls-1"/>
+  <circle cx="414.5" cy="726.5" r="12.5" class="cls-1"/>
+  <path id="_Radial_Repeat_" d="M458.22 433.09v133.82l15.88 66.91 15.88-66.91V433.09l-15.88-66.91-15.88 66.91z" class="cls-1" data-name="&amp;lt;Radial Repeat&amp;gt;"/>
+  <path id="_Radial_Repeat_-2" d="m497.27 421.17-66.9 115.89-19.71 65.88 47.21-50 66.91-115.89 19.7-65.89-47.21 50.01z" class="cls-1" data-name="&amp;lt;Radial Repeat&amp;gt;"/>
+  <path id="_Radial_Repeat_-3" d="m537.06 430.36-115.89 66.91-50.01 47.21 65.89-19.7 115.89-66.91 50-47.21-65.88 19.7z" class="cls-1" data-name="&amp;lt;Radial Repeat&amp;gt;"/>
+  <path id="_Radial_Repeat_-4" d="M566.91 458.22H433.09l-66.91 15.88 66.91 15.88h133.82l66.91-15.88-66.91-15.88z" class="cls-1" data-name="&amp;lt;Radial Repeat&amp;gt;"/>
+  <path id="_Radial_Repeat_-5" d="m578.83 497.27-115.89-66.91-65.88-19.7 50 47.21 115.89 66.91 65.89 19.7-50.01-47.21z" class="cls-1" data-name="&amp;lt;Radial Repeat&amp;gt;"/>
+  <path id="_Radial_Repeat_-6" d="m569.63 537.05-66.9-115.89-47.21-50 19.7 65.88 66.91 115.89 47.21 50.01-19.71-65.89z" class="cls-1" data-name="&amp;lt;Radial Repeat&amp;gt;"/>
+  <path id="_Radial_Repeat_-7" d="M541.78 566.91V433.09l-15.88-66.91-15.88 66.91v133.82l15.88 66.91 15.88-66.91z" class="cls-1" data-name="&amp;lt;Radial Repeat&amp;gt;"/>
+  <path id="_Radial_Repeat_-8" d="m502.73 578.83 66.9-115.89 19.71-65.88-47.21 50-66.91 115.89-19.7 65.89 47.21-50.01z" class="cls-1" data-name="&amp;lt;Radial Repeat&amp;gt;"/>
+  <path id="_Radial_Repeat_-9" d="m462.94 569.63 115.89-66.91 50.01-47.2-65.89 19.7-115.89 66.91-50 47.2 65.88-19.7z" class="cls-1" data-name="&amp;lt;Radial Repeat&amp;gt;"/>
+  <path id="_Radial_Repeat_-10" d="M433.09 541.78h133.82l66.91-15.89-66.91-15.88H433.09l-66.91 15.88 66.91 15.89z" class="cls-1" data-name="&amp;lt;Radial Repeat&amp;gt;"/>
+  <path id="_Radial_Repeat_-11" d="m421.17 502.72 115.89 66.91 65.88 19.7-50-47.2-115.89-66.91-65.89-19.7 50.01 47.2z" class="cls-1" data-name="&amp;lt;Radial Repeat&amp;gt;"/>
+  <path id="_Radial_Repeat_-12" d="m430.37 462.94 66.9 115.89 47.21 50.01-19.7-65.89-66.91-115.89-47.21-50 19.71 65.88z" class="cls-1" data-name="&amp;lt;Radial Repeat&amp;gt;"/>
+  <path d="M642 583.14v-166.8l-142-83.4-142 83.4v166.8l142 83.39 142-83.39zM642 500h115M731 452v-25" class="cls-1"/>
+  <circle cx="768.5" cy="499.5" r="12.5" class="cls-1"/>
+  <path d="M642 452h90" class="cls-1"/>
+  <circle cx="730.5" cy="414.5" r="12.5" class="cls-1"/>
+  <path d="M731 548v25M642 548h90" class="cls-1"/>
+  <circle cx="730.5" cy="585.5" r="12.5" class="cls-1"/>
+  <path d="M358 500H243M269 548v25" class="cls-1"/>
+  <circle cx="231.5" cy="500.5" r="12.5" class="cls-1"/>
+  <path d="M358 548h-90" class="cls-1"/>
+  <circle cx="269.5" cy="585.5" r="12.5" class="cls-1"/>
+  <path d="M269 452v-25M358 452h-90" class="cls-1"/>
+  <circle cx="269.5" cy="414.5" r="12.5" class="cls-1"/>
+  <path d="M500 333v-86M452 273h-25" class="cls-1"/>
+  <circle cx="499.5" cy="235.5" r="12.5" class="cls-1"/>
+  <path d="M452 362v-90" class="cls-1"/>
+  <circle cx="414.5" cy="273.5" r="12.5" class="cls-1"/>
+  <path d="M548 273h25M548 362v-90" class="cls-1"/>
+  <circle cx="585.5" cy="273.5" r="12.5" class="cls-1"/>
+</svg>
