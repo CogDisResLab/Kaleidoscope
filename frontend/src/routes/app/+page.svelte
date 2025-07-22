@@ -5,6 +5,9 @@
   import { onMount, onDestroy } from 'svelte';
   import { writable, derived, get } from 'svelte/store';
 
+  // --- Page Transition State (NEW) ---
+  const isGoingHome = writable(false); // New writable store to track if navigating home
+
   // --- Carousel State and Logic (now at top level of page script) ---
   const currentIndex = writable(0);
   const totalItems = writable(0);
@@ -148,10 +151,21 @@
   };
 
   /**
+   * Determines the X offset for the fly transition based on navigation intent.
+   */
+  $: flyXOffset = $isGoingHome ? window.innerWidth : -window.innerWidth; // NEW: Dynamic X offset
+
+  /**
    * Handles navigation back to the home page.
    */
   function goToHome() {
+    isGoingHome.set(true); // Set the flag to true before navigating
     goto('/');
+  }
+
+  function goToItem(item) {
+    isGoingHome.set(false); // Ensure flag is false for other transitions
+    goto('/app/'+item);
   }
 
   // Array of items for the carousel
@@ -171,8 +185,8 @@
 
 <div
   class="hero bg-base-neutral min-h-screen relative overflow-hidden flex items-center justify-center"
-  in:fly|local="{{ x: window.innerWidth, ...pageTransitionOptions }}"
-  out:fly|local="{{ x: window.innerWidth, ...pageTransitionOptions }}"
+  in:fly|local="{{ x: flyXOffset, ...pageTransitionOptions }}"
+  out:fly|local="{{ x: flyXOffset, ...pageTransitionOptions }}"
 >
   <div class="hero-content text-center flex flex-col items-center justify-start gap-y-8">
     <button
@@ -188,11 +202,14 @@
         {#each carouselItems as item, i (item)}
           <div bind:this={carouselItemDivs[i]} class="flex-shrink-0 w-full basis-full md:basis-1/3">
             <div class="my-2">
-              <div class="card w-full bg-base-100 card-xs shadow-sm">
+            
+              <button 
+              on:click={() => goToItem(item)} class="card w-full bg-base-100 card-xs shadow-sm">
                 <div class="card-body flex items-center justify-center p-6 bg-base-200 rounded-lg shadow-md">
                   <span class="text-lg font-semibold text-primary text-center">{item}</span>
                 </div>
-              </div>
+              
+              </button>
             </div>
           </div>
         {/each}
@@ -212,9 +229,9 @@
 
   <button
     class="absolute left-8 top-1/2 -translate-y-1/2
-           bg-secondary text-secondary-content p-4 rounded-full shadow-lg
-           hover:scale-105 transition-transform duration-200 ease-out
-           flex items-center justify-center z-10"
+            bg-secondary text-secondary-content p-4 rounded-full shadow-lg
+            hover:scale-105 transition-transform duration-200 ease-out
+            flex items-center justify-center z-10"
     aria-label="Go back to Home"
     on:click={goToHome}
   >
@@ -232,4 +249,3 @@
     </svg>
   </button>
 </div>
-
