@@ -15,32 +15,35 @@
       <ul
         tabindex="-1"
         class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
-        <li><a>Item 1</a></li>
-        <li>
-          <a>Parent</a>
-          <ul class="p-2">
-            <li><a>Submenu 1</a></li>
-            <li><a>Submenu 2</a></li>
-          </ul>
-        </li>
-        <li><a>Item 3</a></li>
-      </ul>
+      <li><a href="/about">About</a></li>
+      <li><a href="/brainrnaseq">BrainRNA-seq</a></li>
+      <li><a href="/string">STRING</a></li>
+      <li><a href="/ilincs">iLINCS</a></li>
+      <li><a href="/lookup">Lookup</a></li>
+      <li><a href="/braincloud">BrainCloud</a></li>
+      <li><a href="/gtex">GTEx</a></li>
+      <li><a href="/brainatlas">BrainAtlas</a></li>
+      <li><a href="/gwas">GWAS</a></li>
+      <li><a href="/idg">IDG</a></li>
+      <li><a href="/report">Report</a></li>
+    </ul>
+
     </div>
-    <a class="btn btn-ghost text-xl">Kaleidoscope 2.0</a>
+    <a class="btn btn-ghost text-l mx-6" href="/">Kaleidoscope 2.0</a>
   </div>
   <div class="navbar-center hidden lg:flex">
     <ul class="menu menu-horizontal px-1">
-      <li><a>Item 1</a></li>
-      <li>
-        <details>
-          <summary>Parent</summary>
-          <ul class="p-2 bg-base-100 w-40 z-1">
-            <li><a>Submenu 1</a></li>
-            <li><a>Submenu 2</a></li>
-          </ul>
-        </details>
-      </li>
-      <li><a>Item 3</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/brainrnaseq">BrainRNA-seq</a></li>
+      <li><a href="/string">STRING</a></li>
+      <li><a href="/ilincs">iLINCS</a></li>
+      <li><a href="/lookup">Lookup</a></li>
+      <li><a href="/braincloud">BrainCloud</a></li>
+      <li><a href="/gtex">GTEx</a></li>
+      <li><a href="/brainatlas">BrainAtlas</a></li>
+      <li><a href="/gwas">GWAS</a></li>
+      <li><a href="/idg">IDG</a></li>
+      <li><a href="/report">Report</a></li>
     </ul>
   </div>
   <div class="navbar-end">

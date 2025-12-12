@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #fdc90b;
+        stroke-miterlimit: 10;
+        stroke-width: 2.73px;
+      }
+
+      .cls-2 {
+        font-family: AvenirNext-Medium, 'Avenir Next';
+        font-size: 80.82px;
+        font-weight: 500;
+      }
+
+      .cls-3 {
+        letter-spacing: 0em;
+      }
+
+      .cls-4 {
+        letter-spacing: -.01em;
+      }
+    </style>
+  </defs>
+  <text class="cls-2" transform="translate(331.15 522.11)"><tspan class="cls-4" x="0" y="0">K</tspan><tspan class="cls-3" x="52.29" y="0">ALEIDOS</tspan><tspan class="cls-4" x="397.63" y="0">C</tspan><tspan x="453.88" y="0">OPE</tspan></text>
+  <g>
+    <line class="cls-1" x1="177.78" y1="576.12" x2="177.78" y2="615.32"/>
+    <line class="cls-1" x1="199.66" y1="603.47" x2="211.05" y2="603.47"/>
+    <circle class="cls-1" cx="178" cy="620.56" r="5.7"/>
+    <line class="cls-1" x1="199.66" y1="562.9" x2="199.66" y2="603.93"/>
+    <circle class="cls-1" cx="216.75" cy="603.24" r="5.7"/>
+    <line class="cls-1" x1="155.9" y1="603.47" x2="144.5" y2="603.47"/>
+    <line class="cls-1" x1="155.9" y1="562.9" x2="155.9" y2="603.93"/>
+    <circle class="cls-1" cx="138.8" cy="603.24" r="5.7"/>
+    <g>
+      <g id="_Radial_Repeat_" data-name="&amp;lt;Radial Repeat&amp;gt;">
+        <polygon class="cls-1" points="158.73 469.5 158.73 530.5 165.97 561 173.21 530.5 173.21 469.5 165.97 439 158.73 469.5"/>
+      </g>
+      <g id="_Radial_Repeat_-2" data-name="&amp;lt;Radial Repeat&amp;gt;">
+        <polygon class="cls-1" points="176.54 464.06 146.04 516.89 137.06 546.92 158.57 524.13 189.07 471.3 198.05 441.27 176.54 464.06"/>
+      </g>
+      <g id="_Radial_Repeat_-3" data-name="&amp;lt;Radial Repeat&amp;gt;">
+        <polygon class="cls-1" points="194.67 468.26 141.84 498.76 119.05 520.28 149.08 511.3 201.91 480.8 224.7 459.28 194.67 468.26"/>
+      </g>
+      <g id="_Radial_Repeat_-4" data-name="&amp;lt;Radial Repeat&amp;gt;">
+        <polygon class="cls-1" points="208.28 480.96 147.28 480.96 116.78 488.19 147.28 495.43 208.28 495.43 238.77 488.19 208.28 480.96"/>
+      </g>
+      <g id="_Radial_Repeat_-5" data-name="&amp;lt;Radial Repeat&amp;gt;">
+        <polygon class="cls-1" points="213.71 498.76 160.89 468.26 130.85 459.28 153.65 480.8 206.47 511.29 236.5 520.27 213.71 498.76"/>
+      </g>
+      <g id="_Radial_Repeat_-6" data-name="&amp;lt;Radial Repeat&amp;gt;">
+        <polygon class="cls-1" points="209.52 516.89 179.02 464.07 157.5 441.27 166.48 471.3 196.98 524.13 218.5 546.92 209.52 516.89"/>
+      </g>
+      <g id="_Radial_Repeat_-7" data-name="&amp;lt;Radial Repeat&amp;gt;">
+        <polygon class="cls-1" points="196.82 530.5 196.82 469.5 189.58 439 182.34 469.5 182.34 530.5 189.58 561 196.82 530.5"/>
+      </g>
+      <g id="_Radial_Repeat_-8" data-name="&amp;lt;Radial Repeat&amp;gt;">
+        <polygon class="cls-1" points="179.02 535.93 209.52 483.11 218.5 453.08 196.98 475.87 166.48 528.69 157.5 558.73 179.02 535.93"/>
+      </g>
+      <g id="_Radial_Repeat_-9" data-name="&amp;lt;Radial Repeat&amp;gt;">
+        <polygon class="cls-1" points="160.89 531.74 213.71 501.24 236.5 479.72 206.47 488.7 153.65 519.2 130.85 540.72 160.89 531.74"/>
+      </g>
+      <g id="_Radial_Repeat_-10" data-name="&amp;lt;Radial Repeat&amp;gt;">
+        <polygon class="cls-1" points="147.28 519.04 208.27 519.04 238.77 511.8 208.27 504.56 147.28 504.56 116.78 511.8 147.28 519.04"/>
+      </g>
+      <g id="_Radial_Repeat_-11" data-name="&amp;lt;Radial Repeat&amp;gt;">
+        <polygon class="cls-1" points="141.84 501.24 194.67 531.74 224.7 540.72 201.91 519.2 149.08 488.7 119.05 479.72 141.84 501.24"/>
+      </g>
+      <g id="_Radial_Repeat_-12" data-name="&amp;lt;Radial Repeat&amp;gt;">
+        <polygon class="cls-1" points="146.04 483.11 176.54 535.93 198.05 558.73 189.07 528.69 158.57 475.87 137.06 453.08 146.04 483.11"/>
+      </g>
+    </g>
+    <polygon class="cls-1" points="242.5 537.89 242.5 461.87 177.78 423.85 113.05 461.87 113.05 537.89 177.78 575.91 242.5 537.89"/>
+    <line class="cls-1" x1="242.5" y1="500" x2="294.92" y2="500"/>
+    <line class="cls-1" x1="283.07" y1="478.12" x2="283.07" y2="466.73"/>
+    <circle class="cls-1" cx="300.16" cy="499.77" r="5.7"/>
+    <line class="cls-1" x1="242.5" y1="478.12" x2="283.53" y2="478.12"/>
+    <circle class="cls-1" cx="282.84" cy="461.03" r="5.7"/>
+    <line class="cls-1" x1="283.07" y1="521.88" x2="283.07" y2="533.27"/>
+    <line class="cls-1" x1="242.5" y1="521.88" x2="283.53" y2="521.88"/>
+    <circle class="cls-1" cx="282.84" cy="538.97" r="5.7"/>
+    <line class="cls-1" x1="113.05" y1="500" x2="60.63" y2="500"/>
+    <line class="cls-1" x1="72.48" y1="521.88" x2="72.48" y2="533.27"/>
+    <circle class="cls-1" cx="55.39" cy="500.23" r="5.7"/>
+    <line class="cls-1" x1="113.05" y1="521.88" x2="72.03" y2="521.88"/>
+    <circle class="cls-1" cx="72.71" cy="538.97" r="5.7"/>
+    <line class="cls-1" x1="72.48" y1="478.12" x2="72.48" y2="466.73"/>
+    <line class="cls-1" x1="113.05" y1="478.12" x2="72.03" y2="478.12"/>
+    <circle class="cls-1" cx="72.71" cy="461.03" r="5.7"/>
+    <line class="cls-1" x1="177.78" y1="423.88" x2="177.78" y2="384.68"/>
+    <line class="cls-1" x1="155.9" y1="396.53" x2="144.5" y2="396.53"/>
+    <circle class="cls-1" cx="177.55" cy="379.44" r="5.7"/>
+    <line class="cls-1" x1="155.9" y1="437.1" x2="155.9" y2="396.07"/>
+    <circle class="cls-1" cx="138.8" cy="396.76" r="5.7"/>
+    <line class="cls-1" x1="199.66" y1="396.53" x2="211.05" y2="396.53"/>
+    <line class="cls-1" x1="199.66" y1="437.1" x2="199.66" y2="396.07"/>
+    <circle class="cls-1" cx="216.75" cy="396.76" r="5.7"/>
+  </g>
+</svg>
