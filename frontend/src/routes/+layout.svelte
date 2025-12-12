@@ -16,16 +16,16 @@
         tabindex="-1"
         class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
       <li><a href="/about">About</a></li>
-      <li><a href="/brainrnaseq">BrainRNA-seq</a></li>
-      <li><a href="/string">STRING</a></li>
-      <li><a href="/ilincs">iLINCS</a></li>
-      <li><a href="/lookup">Lookup</a></li>
-      <li><a href="/braincloud">BrainCloud</a></li>
-      <li><a href="/gtex">GTEx</a></li>
-      <li><a href="/brainatlas">BrainAtlas</a></li>
-      <li><a href="/gwas">GWAS</a></li>
-      <li><a href="/idg">IDG</a></li>
-      <li><a href="/report">Report</a></li>
+      <li><a href="/search/brainrnaseq">BrainRNA-seq</a></li>
+      <li><a href="/search/string">STRING</a></li>
+      <li><a href="/search/ilincs">iLINCS</a></li>
+      <li><a href="/search/lookup">Lookup</a></li>
+      <li><a href="/search/braincloud">BrainCloud</a></li>
+      <li><a href="/search/gtex">GTEx</a></li>
+      <li><a href="/search/brainatlas">BrainAtlas</a></li>
+      <li><a href="/search/gwas">GWAS</a></li>
+      <li><a href="/search/idg">IDG</a></li>
+      <li><a href="/search/report">Report</a></li>
     </ul>
 
     </div>
@@ -34,16 +34,16 @@
   <div class="navbar-center hidden lg:flex">
     <ul class="menu menu-horizontal px-1">
       <li><a href="/about">About</a></li>
-      <li><a href="/brainrnaseq">BrainRNA-seq</a></li>
-      <li><a href="/string">STRING</a></li>
-      <li><a href="/ilincs">iLINCS</a></li>
-      <li><a href="/lookup">Lookup</a></li>
-      <li><a href="/braincloud">BrainCloud</a></li>
-      <li><a href="/gtex">GTEx</a></li>
-      <li><a href="/brainatlas">BrainAtlas</a></li>
-      <li><a href="/gwas">GWAS</a></li>
-      <li><a href="/idg">IDG</a></li>
-      <li><a href="/report">Report</a></li>
+      <li><a href="/search/brainrnaseq">BrainRNA-seq</a></li>
+      <li><a href="/search/string">STRING</a></li>
+      <li><a href="/search/ilincs">iLINCS</a></li>
+      <li><a href="/search/lookup">Lookup</a></li>
+      <li><a href="/search/braincloud">BrainCloud</a></li>
+      <li><a href="/search/gtex">GTEx</a></li>
+      <li><a href="/search/brainatlas">BrainAtlas</a></li>
+      <li><a href="/search/gwas">GWAS</a></li>
+      <li><a href="/search/idg">IDG</a></li>
+      <li><a href="/search/report">Report</a></li>
     </ul>
   </div>
   <div class="navbar-end">
