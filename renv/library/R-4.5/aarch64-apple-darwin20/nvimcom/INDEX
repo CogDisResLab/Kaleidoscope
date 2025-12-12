@@ -1,0 +1,15 @@
+etags2ctags             Convert an Emacs tags file into the CTags file
+                        format.
+nvim.interlace.rmd      Convert an Rmd file into PDF
+nvim.interlace.rnoweb   Run either Sweave or knit and, then, pdflatex
+                        on an Rnoweb file
+nvim.interlace.rrst     Run knit2pdf to convert an Rrst file into PDF
+                        using pdflatex or rst2pdf
+nvim.list.args          List function arguments
+nvim.names              Names of list elements
+nvim.plot               Plot an object
+nvim.print              Print an object.
+nvim.srcdir             Source all .R files of a given directory.
+nvimcom-package         Allow the communication between Nvim and R
+NvimR.source            Wrapper to base::source
+vi                      Alternative vi function
